@@ -1,0 +1,28 @@
+dsh-purge
+Copyright 2026 YuJunZhiXue
+
+Source: https://github.com/YuJunZhiXue/dsh-purge
+
+This product is licensed under the Apache License, Version 2.0.
+Derivative works must retain this NOTICE and attribution.
+
+------------------------------------------------------------------------
+
+dsh-purge-lite (this repository)
+Modifications Copyright 2026 Nero0427
+Source: https://github.com/Nero0427/dsh-purge-lite
+
+This is a trimmed derivative of the upstream project named above.
+The following files and subsystems were removed from the derivative;
+everything else remains a modification of the upstream work:
+
+  - lib/update.js, lib/official-update.js (+ .wscript), lib/zip-extract.js
+  - lib/skills.js, lib/rewind.js, lib/continue-retry.js
+  - lib/drill-grant.js, lib/redteam/role-section.js
+  - lib/reapply-cli.js, restart-desktop.js, restart-web.js,
+    uninstall-restart.js, web-preflight-entry.js, web-reclaim.js
+  - host patches #45 and #46 (desktop update handoff)
+  - front-end panels other than the read-only status panel
+
+The upstream NOTICE above is retained in full, as required by
+Section 4(d) of the Apache License, Version 2.0.

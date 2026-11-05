@@ -1,0 +1,81 @@
+{
+  "name": "dsh-purge",
+  "version": "1.2.0-lite",
+  "description": "DeepSeek Harness 破甲（精简版）：只做提示词注入与宿主补丁。无演练台、无资产库、无技能库、无规则面板、无在线更新，设置页一个只读状态面板。",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./client": "./client.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "dsh-purge": "bin/dsh-purge.js"
+  },
+  "files": [
+    "lib",
+    "!lib/default-prompt-inject.md",
+    "bin",
+    "client.js",
+    "cordis.patch.yml",
+    "LICENSE",
+    "NOTICE",
+    "scripts"
+  ],
+  "scripts": {
+    "postinstall": "node scripts/ensure-profile-bundle.mjs"
+  },
+  "license": "Apache-2.0",
+  "author": "Nero0427",
+  "contributors": [
+    "YuJunZhiXue (upstream dsh-purge)"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nero0427/dsh-purge-lite.git"
+  },
+  "homepage": "https://github.com/Nero0427/dsh-purge-lite#readme",
+  "bugs": {
+    "url": "https://github.com/Nero0427/dsh-purge-lite/issues"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "instructions",
+    "prompt-inject",
+    "agent"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-connection",
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-slots",
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dshTarget": "0.2.1-rc.2",
+  "dshTargets": [
+    "0.2.1-rc.2",
+    "0.2.1-rc.5"
+  ]
+}

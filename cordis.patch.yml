@@ -1,0 +1,27 @@
+# dsh-purge bundle patch（精简版 1.2）
+#
+# 只做提示词注入与宿主补丁。演练台、资产库、技能库、规则面板、在线更新、
+# 红队预设一律不存在。前端只有设置页一个只读状态面板（读 /dsh-purge/prompt-text）。
+
+# 宿主自带的身份段与前后缀全部清空，注入正文自己带身份。
+- id: system-prompt
+  config:
+    includeHarnessIdentity: false
+    personaPrefix: ""
+    personaSuffix: ""
+
+# 本体 insert 写在用户层 profile/cordis.patch.yml。这里只改已入队条目的 inject/config。
+- id: dsh-purge
+  name: dsh-purge
+  inject: [systemPrompt, tools]
+  config:
+    enabled: true
+    autoApplyOnStart: false
+    autoRevertOnMissing: false
+    injectOnce: false
+    stripMnemon: true
+    verbose: false
+    capabilityProtocol: true
+    hooksDenyBypass: true
+    anchorMode: auto
+    subagentControl: true

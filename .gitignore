@@ -1,0 +1,42 @@
+# 不上传
+node_modules/
+*.tgz
+npm-debug.log*
+*.log
+.DS_Store
+Thumbs.db
+
+# 只给本机 Cursor 技能看，不进仓库
+docs/agents/
+.cursor/
+
+# 本地草稿，不进仓库
+scripts/tmp-*.mjs
+scripts/test-*.mjs
+.scratch/
+dsh-redteam-mode-main/
+/1
+
+# 外部参考，不是本插件
+choirboy-prompt/
+/choirboy-prompt/
+_archive/
+频道推广手册/
+
+# 嵌入前的提示词原文：属于使用者本地人设，不随仓库分发。
+# 插件运行时读 $DSH_HOME/prompt-inject.md 或内置加密默认值，不依赖这些文件。
+lib/default-prompt-inject*.md
+default-prompt-inject*.md
+prompt-inject.md
+
+# 打包产物（走 GitHub Releases，不进仓库）
+dist/
+*.zip
+
+# 本机官方安装包、解包目录、拆出的压缩包
+/deepseek-harness-*.exe
+/official-harness-unpacked/
+/official-harness-payload.7z
+*.asar
+*.asar.bak
+*.bak
