@@ -21,6 +21,7 @@
 - [这是什么](#这是什么)
 - [设计取舍](#设计取舍)
 - [安装](#安装)
+- [升级](#升级)
 - [快速开始](#快速开始)
 - [配置](#配置)
 - [命令](#命令)
@@ -63,7 +64,7 @@ DeepSeek Harness（下称 DSH）在每次请求前会装配 `system prompt`：�
 
 ### 方式一：Release 解压（推荐）
 
-1. 到 [Releases](../../releases) 下载最新 `dsh-purge-<version>.zip`。
+1. 到 [Releases](https://github.com/Nero0427/dsh-purge-lite/releases) 下载最新 `dsh-purge-<version>.zip`。
 2. 解压后把 `dsh-purge/` 整个目录放到：
 
 ```
@@ -101,6 +102,29 @@ node bin/dsh-purge.js --status
 ```
 
 能看到 84 条补丁的状态表就是接上了。
+
+## 升级
+
+精简版不含在线更新器，升级就是换一份新文件。**顺序很重要**——旧版写进宿主的代码必须先还原，否则会残留：
+
+1. 打开 [Releases](https://github.com/Nero0427/dsh-purge-lite/releases)，先看 release notes 与 [CHANGELOG.md](CHANGELOG.md) 的迁移提示（例如 1.1.90 → 1.2.0 的强制 revert）。
+2. 在**旧目录**里还原补丁：
+
+   ```bash
+   node bin/dsh-purge.js --revert
+   ```
+
+3. 下载 `dsh-purge-<version>.zip`，解压，整体替换 `<DSH_HOME>/profiles/desktop/node_modules/dsh-purge`。
+4. 重新应用并确认状态：
+
+   ```bash
+   node bin/dsh-purge.js --apply
+   node bin/dsh-purge.js --status
+   ```
+
+5. 重启 DSH。
+
+版本号在根 `package.json`，与 Release tag `v<version>` 一致。用 `link:` 装的开发副本直接 `git pull` 即可，但仍需走一遍第 2、4 步。
 
 ## 快速开始
 
