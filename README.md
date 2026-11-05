@@ -84,7 +84,16 @@ cd <DSH_HOME>/profiles/desktop
 pnpm add file:/path/to/dsh-purge-1.2.0-lite.tgz
 ```
 
-### 方式三：从仓库克隆（开发用）
+### 方式三：从 GitHub 仓库安装（推荐，可点更新）
+
+```bash
+cd <DSH_HOME>/profiles/desktop
+pnpm add github:Nero0427/dsh-purge-lite
+```
+
+插件市场会比较仓库根 `package.json` 的 `version` 与已装版本，发现新版后出现更新入口，点击即重装到新版。**发新版必须递增版本号**，否则市场不会提示更新。
+
+### 方式四：克隆后 `link:`（开发用）
 
 ```bash
 git clone https://github.com/Nero0427/dsh-purge-lite.git
@@ -92,7 +101,7 @@ cd <DSH_HOME>/profiles/desktop
 pnpm add link:/path/to/dsh-purge-lite
 ```
 
-`link:` 方式改完源码不用重装，重启 DSH 即生效。
+`link:` 方式改完源码不用重装，重启 DSH 即生效。但它是本地开发副本，**不在插件市场的更新通道内**，不会收到更新提示。
 
 ### 验证安装
 
@@ -125,6 +134,8 @@ node bin/dsh-purge.js --status
 5. 重启 DSH。
 
 版本号在根 `package.json`，与 Release tag `v<version>` 一致。用 `link:` 装的开发副本直接 `git pull` 即可，但仍需走一遍第 2、4 步。
+
+**从 `github:` 安装的**：市场点「更新」只替换 `node_modules` 里的插件文件，宿主里已打的补丁不会自动重打。更新完仍需执行第 4 步的 `--apply --status`；若新版调整了补丁表，先 `--revert` 再 `--apply`。补丁备份在 `<DSH_HOME>/dsh-purge/host-backups/`，不在插件目录里，替换插件后照样能还原。
 
 ## 快速开始
 
