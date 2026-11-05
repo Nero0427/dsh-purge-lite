@@ -12,6 +12,19 @@
 - 补丁表从 84 条裁剪到约 35 条（提示词层 + 审批门 + 沙箱），逐组验证依赖关系。
 - `drifted` 补丁的自动 pattern 更新（当前只能等新版本）。
 
+## [1.2.2-lite] - 2026-11-05
+
+修复从 GitHub 仓库安装后，市场「点击更新」被构建授权反复拦住的问题。补丁表与运行时逻辑未改。
+
+### Fixed
+
+- `lib/profile-insert.js`：`purgePnpmBuildSpecs()` 读取 profile 的 `package.json`，在依赖为 `github:owner/repo` 时额外生成稳定 git 授权键 `dsh-purge@git+https://github.com/owner/repo.git`，新装不必手工放行构建脚本。
+- `rewritePnpmAllowBuilds()` 保留 pnpm / 市场写出的合法 git 键，并把待决占位行 `set this to true or false` 确认为 `true`；畸形历史键仍按 #185 清除。此前每跑一次 postinstall 就把授权删光，导致 `ERR_PNPM_IGNORED_BUILDS` 反复出现，且因 pnpm 按整个 profile 检查，会连带阻塞同一 profile 里其它插件的更新。
+
+### Test
+
+- 构造含占位行、稳定 git 键与畸形键的 YAML 样本，验证重写结果：占位行变 `true`、稳定键保留、畸形键清除、`validateAllowBuildRewrite` 通过。
+
 ## [1.2.1-lite] - 2026-11-05
 
 维护版本，代码与补丁表未改。
@@ -90,7 +103,8 @@ node bin/dsh-purge.js --apply
 
 首个精简版基线。从上游 `dsh-purge` v1.1.90 裁出第一版可运行的精简形态：保留注入与补丁主链，砍掉外围面板。
 
-[Unreleased]: https://github.com/Nero0427/dsh-purge-lite/compare/v1.2.1-lite...HEAD
+[Unreleased]: https://github.com/Nero0427/dsh-purge-lite/compare/v1.2.2-lite...HEAD
+[1.2.2-lite]: https://github.com/Nero0427/dsh-purge-lite/releases/tag/v1.2.2-lite
 [1.2.1-lite]: https://github.com/Nero0427/dsh-purge-lite/releases/tag/v1.2.1-lite
 [1.2.0-lite]: https://github.com/Nero0427/dsh-purge-lite/releases/tag/v1.2.0-lite
 [1.1.90-lite]: https://github.com/Nero0427/dsh-purge-lite/releases/tag/v1.1.90-lite

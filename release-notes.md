@@ -1,14 +1,20 @@
-# 1.2.1-lite
+# 1.2.2-lite
 
-维护版本：补齐从 GitHub 仓库安装与插件市场更新的说明。功能与补丁表与 `1.2.0-lite` 完全相同，代码未改。
+修复从 GitHub 仓库（`github:`）安装后，插件市场「点击更新」会被构建授权反复拦住的问题。补丁表与运行时逻辑未改。
 
-## 为什么发这一版
+## 问题
 
-`1.2.0-lite` 的文档只写了「下载 zip 解压」，而插件市场判断新版依据的是仓库根 `package.json` 的 `version`。用 `link:` 挂本地副本时市场把插件当成开发副本，不会提示更新。这一版把 `pnpm add github:Nero0427/dsh-purge-lite` 写进安装方式，并说明从仓库安装后「点击更新」的边界。
+pnpm 11 默认拦依赖的构建脚本。对 git 源，它只认 `name@git+https://github.com/owner/repo.git` 这类稳定授权键；插件的 postinstall 在重写 `pnpm-workspace.yaml` 的 `allowBuilds` 时，会把市场 `approve-builds` 写好的这些键一律当作历史垃圾删掉，并把 pnpm 的待决占位行 `set this to true or false` 原样留下。结果每次更新都回到 `ERR_PNPM_IGNORED_BUILDS`，而且因为 pnpm 检查的是整个 profile，**装在这个 profile 里的其它插件也一起更新不了**。
 
-递增版本号本身也是一次真实更新：已用 `github:` 安装的 profile 会检测到 `1.2.1-lite` 并可以点击升级。
+## 修了什么
 
-## 更新后的必要动作
+- `purgePnpmBuildSpecs()` 现在读取 profile 的 `package.json`：依赖写成 `github:owner/repo` 时，除裸包名外额外生成稳定 git 授权键。全新安装不必再手工点「放行构建脚本」。
+- `rewritePnpmAllowBuilds()` 保留 pnpm / 市场写出的两类合法 git 键（稳定 git 键与 commit 固定的 codeload 键），并把待决占位行直接确认为 `true`；`dsh-purge@https` 这类畸形历史键仍按原有自愈逻辑丢弃，避免 `ERR_PNPM_INVALID_VERSION_UNION`。
+- 用构造样本验证过：占位行变 `true`、稳定键保留、畸形键清除、`validateAllowBuildRewrite` 通过。
+
+## 从旧版升级
+
+已经卡在这个问题的 profile，先在插件市场点一次「放行构建脚本并重试」（或执行 `pnpm approve-builds`），再点更新到本版本。本版本装上之后，后续更新不再需要这一步。
 
 市场点「更新」只替换 `node_modules` 里的插件文件，**宿主里已打的补丁不会自动重打**：
 
@@ -17,22 +23,16 @@ node bin/dsh-purge.js --apply
 node bin/dsh-purge.js --status
 ```
 
-若新版调整了补丁表，先 `--revert` 再 `--apply`。补丁备份在 `<DSH_HOME>/dsh-purge/host-backups/`，不在插件目录里，替换插件后照样能还原。
+若新版调整了补丁表，先 `--revert` 再 `--apply`。
 
 ## 安装
-
-推荐从仓库安装（可被市场管理、可点更新）：
 
 ```bash
 cd <DSH_HOME>/profiles/desktop
 pnpm add github:Nero0427/dsh-purge-lite
 ```
 
-或者下载本页的 `dsh-purge-1.2.1-lite.zip`，解压到 `<DSH_HOME>/profiles/desktop/node_modules/dsh-purge`，然后：
-
-```bash
-node "<DSH_HOME>/profiles/desktop/node_modules/dsh-purge/scripts/ensure-profile-bundle.mjs"
-```
+或者下载本页的 `dsh-purge-1.2.2-lite.zip`，解压到 `<DSH_HOME>/profiles/desktop/node_modules/dsh-purge`，然后运行 `node .../scripts/ensure-profile-bundle.mjs`。
 
 ## 完整变更
 
