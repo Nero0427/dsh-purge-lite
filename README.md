@@ -7,7 +7,7 @@
 一个只做两件事的插件：把注入正文塞进 `system prompt`，再给宿主打上让它生效的补丁。除此之外的模块全部不存在。
 
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-[![version](https://img.shields.io/badge/version-1.2.0--lite-success.svg)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-1.2.1--lite-success.svg)](CHANGELOG.md)
 [![node](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](https://nodejs.org)
 [![patches](https://img.shields.io/badge/host%20patches-84-informational.svg)](#工作原理)
 [![platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](#兼容性)
@@ -77,11 +77,13 @@ DeepSeek Harness（下称 DSH）在每次请求前会装配 `system prompt`：�
 node "<DSH_HOME>/profiles/desktop/node_modules/dsh-purge/scripts/ensure-profile-bundle.mjs"
 ```
 
-### 方式二：tgz 安装
+### 方式二：本地打包 tgz（开发用）
+
+Release 只提供源码 zip，不发 tgz。需要 tgz 时先在插件目录执行 `pnpm pack` 自行生成：
 
 ```bash
 cd <DSH_HOME>/profiles/desktop
-pnpm add file:/path/to/dsh-purge-1.2.0-lite.tgz
+pnpm add file:/path/to/dsh-purge-<version>.tgz
 ```
 
 ### 方式三：从 GitHub 仓库安装（推荐，可点更新）
@@ -347,6 +349,7 @@ dsh-purge --help        # 帮助
 
 | 版本 | 要点 |
 |---|---|
+| `1.2.1-lite` | 补 GitHub 仓库安装与更新说明，代码未改 |
 | `1.2.0-lite` | 删除 13 个模块（在线更新、技能库、回退、续跑、演练台），补丁 86 → 84 |
 | `1.1.90-lite` | 首个精简版基线 |
 

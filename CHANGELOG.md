@@ -12,6 +12,19 @@
 - 补丁表从 84 条裁剪到约 35 条（提示词层 + 审批门 + 沙箱），逐组验证依赖关系。
 - `drifted` 补丁的自动 pattern 更新（当前只能等新版本）。
 
+## [1.2.1-lite] - 2026-11-05
+
+维护版本，代码与补丁表未改。
+
+### Added
+
+- README 增加「从 GitHub 仓库安装」方式：`pnpm add github:Nero0427/dsh-purge-lite`，说明市场按仓库根 `package.json` 的 `version` 判断新版。
+- README 升级章节说明：`link:` 是本地开发副本、不在市场更新通道；从仓库安装后点更新只替换插件文件，宿主补丁仍需 `--apply`（必要时先 `--revert`）。
+
+### Notes
+
+- 插件自身不含在线更新器，更新由 DSH 插件市场执行；本版本递增版本号供更新链路检测。
+
 ## [1.2.0-lite] - 2026-11-04
 
 以「只做注入与补丁」为原则做的第二轮删减。与 1.1.90-lite 相比，删掉的模块不是停用，而是从代码树里彻底消失。
@@ -77,6 +90,7 @@ node bin/dsh-purge.js --apply
 
 首个精简版基线。从上游 `dsh-purge` v1.1.90 裁出第一版可运行的精简形态：保留注入与补丁主链，砍掉外围面板。
 
-[Unreleased]: https://github.com/Nero0427/dsh-purge-lite/compare/v1.2.0-lite...HEAD
+[Unreleased]: https://github.com/Nero0427/dsh-purge-lite/compare/v1.2.1-lite...HEAD
+[1.2.1-lite]: https://github.com/Nero0427/dsh-purge-lite/releases/tag/v1.2.1-lite
 [1.2.0-lite]: https://github.com/Nero0427/dsh-purge-lite/releases/tag/v1.2.0-lite
 [1.1.90-lite]: https://github.com/Nero0427/dsh-purge-lite/releases/tag/v1.1.90-lite

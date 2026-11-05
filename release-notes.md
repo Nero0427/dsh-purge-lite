@@ -1,32 +1,34 @@
-# 1.2.0-lite
+# 1.2.1-lite
 
-第二轮精简。删掉的模块不是停用，而是从代码树里彻底消失。
+维护版本：补齐从 GitHub 仓库安装与插件市场更新的说明。功能与补丁表与 `1.2.0-lite` 完全相同，代码未改。
 
-## 重点
+## 为什么发这一版
 
-- **补丁表 86 → 84**：移除 `#45` / `#46`（桌面更新接管）。
-- **模块 38 → 27**：在线更新、技能库、消息回退、自动续跑、演练台、红队角色稿全部删除，约 170 KB。
-- **命令只剩 `/purge`**：`/rules`、`/skills`、`/rewind` 注销。
-- **面板只剩只读状态页**：正文大小、行数、修改时间、来源路径、正文。
+`1.2.0-lite` 的文档只写了「下载 zip 解压」，而插件市场判断新版依据的是仓库根 `package.json` 的 `version`。用 `link:` 挂本地副本时市场把插件当成开发副本，不会提示更新。这一版把 `pnpm add github:Nero0427/dsh-purge-lite` 写进安装方式，并说明从仓库安装后「点击更新」的边界。
 
-## 升级注意
+递增版本号本身也是一次真实更新：已用 `github:` 安装的 profile 会检测到 `1.2.1-lite` 并可以点击升级。
 
-从 `1.1.90-lite` 上来必须先还原再应用，否则旧补丁 #45/#46 会留在 `main.js` 里：
+## 更新后的必要动作
+
+市场点「更新」只替换 `node_modules` 里的插件文件，**宿主里已打的补丁不会自动重打**：
 
 ```bash
-node bin/dsh-purge.js --revert
 node bin/dsh-purge.js --apply
+node bin/dsh-purge.js --status
 ```
+
+若新版调整了补丁表，先 `--revert` 再 `--apply`。补丁备份在 `<DSH_HOME>/dsh-purge/host-backups/`，不在插件目录里，替换插件后照样能还原。
 
 ## 安装
 
-下载本页下方的 `dsh-purge-1.2.0-lite.zip`，解压到：
+推荐从仓库安装（可被市场管理、可点更新）：
 
-```
-<DSH_HOME>/profiles/desktop/node_modules/dsh-purge
+```bash
+cd <DSH_HOME>/profiles/desktop
+pnpm add github:Nero0427/dsh-purge-lite
 ```
 
-然后：
+或者下载本页的 `dsh-purge-1.2.1-lite.zip`，解压到 `<DSH_HOME>/profiles/desktop/node_modules/dsh-purge`，然后：
 
 ```bash
 node "<DSH_HOME>/profiles/desktop/node_modules/dsh-purge/scripts/ensure-profile-bundle.mjs"
@@ -35,7 +37,3 @@ node "<DSH_HOME>/profiles/desktop/node_modules/dsh-purge/scripts/ensure-profile-
 ## 完整变更
 
 见 [CHANGELOG.md](CHANGELOG.md)。
-
----
-
-**Verification**：文件 54 → 40，体积 1.2 MB → 913 KB，tgz 242 KB，`node --check` 全通过，`import('dsh-purge')` 正常导出 7 个符号。
