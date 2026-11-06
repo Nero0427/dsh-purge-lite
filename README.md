@@ -199,6 +199,16 @@ node bin/dsh-purge.js --revert
 | `capabilityProtocol` | `true` | 追加一段"如何主动发现 skill / MCP"的说明 |
 | `hooksDenyBypass` | `true` | 审批门按本插件配置放行，不再每条都问 |
 
+**注入模式**（同一份 `inject-switch.json` 的 `mode` 字段）：
+
+| 模式 | 注入内容 | 体积 |
+|---|---|---|
+| `full`（默认） | 整份 `prompt-inject.md` | 26,275 B |
+| `general` | 只注入 `$DSH_HOME/dsh-purge/sections/core.md` | 19,427 B（省 26%） |
+| `pentest` | `core.md` + `sections/pentest.md` | 26,270 B（等于全量） |
+
+分段文件放在 `$DSH_HOME/dsh-purge/sections/`，缺任一文件都自动降级回全量注入。`full` 下完全不读这些文件，行为与 1.3.0 一致。
+
 另有一个**运行时开关**，不属于上面的 cordis 配置：设置页状态卡上的「关闭注入 / 开启注入」，状态落在 `$DSH_HOME/dsh-purge/inject-switch.json`（字段 `promptInject`，默认 `true`）。关掉后宿主不再往 system prompt 挂注入正文；切换**下一轮对话生效，不用重启 dsh**。它与配置里的 `enabled` 是「与」关系，任一为假即不注入。
 | `anchorMode` | `auto` | `auto` 挂尾部锚点，`off` 立即关闭 |
 | `subagentControl` | `true` | 子代理的审批由本插件接管 |
@@ -228,6 +238,9 @@ dsh-purge --apply       # 应用
 dsh-purge --revert      # 回滚
 dsh-purge --uninstall   # 卸载（已应用则先还原）
 dsh-purge --edit        # 编辑 prompt-inject.md
+dsh-purge --mode <full|general|pentest>   # 切换注入模式（下一轮对话生效）
+dsh-purge --bash-budget [ms]              # 收紧 ops_bash 前台超时上限（默认 180000）
+dsh-purge --bash-budget-revert            # 还原 ops_bash 超时上限
 dsh-purge --help        # 帮助
 ```
 
@@ -245,8 +258,8 @@ dsh-purge --help        # 帮助
 | POST | `/dsh-purge/override` | 写入注入文件 |
 | POST | `/dsh-purge/restart` | 重启宿主 |
 | POST | `/dsh-purge/hooks-deny` | 开关审批门绕过 |
-| GET | `/dsh-purge/inject` | 读注入开关状态 |
-| POST | `/dsh-purge/inject` | 写注入开关（body `{"promptInject": boolean}`），下一轮对话生效 |
+| GET | `/dsh-purge/inject` | 读注入开关与模式，附可用模式列表 |
+| POST | `/dsh-purge/inject` | 写开关或模式（body `{"promptInject": boolean}` 和/或 `{"mode": "general"}`），下一轮对话生效 |
 
 前端 `client.js` 调用 `prompt-text`、`status` 与 `inject`，其余给设置页的按钮用。面板挂在「设置 → Purge」。
 
@@ -284,7 +297,7 @@ dsh-purge --help        # 帮助
 ```
 .
 ├── bin/
-│   └── dsh-purge.js            CLI 入口（--status/--apply/--revert/...）
+│   └── dsh-purge.js            CLI 入口（--status/--apply/--revert/--mode/--bash-budget/...）
 ├── lib/
 │   ├── index.js                插件入口：命令、路由、工具、配置装配
 │   ├── core.js                 84 条补丁表、asar 解包、加密默认正文
@@ -295,7 +308,9 @@ dsh-purge --help        # 帮助
 │   ├── profile-insert.js       profile bundle 自愈
 │   ├── extract-asar.js         asar 解包 / 回写
 │   ├── hooks-deny.js           审批门绕过
-│   ├── inject-switch.js        注入总开关（运行时，下一轮生效）
+│   ├── inject-switch.js        注入总开关与模式（运行时，下一轮生效）
+│   ├── sections.js             按模式组合注入正文（core + 场景段）
+│   ├── bash-budget.js          ops_bash 前台超时上限的收紧 / 还原
 │   ├── anchor.js               尾部锚点
 │   ├── capability-protocol.js  能力发现协议段
 │   ├── subagent-control.js     子代理审批接管
