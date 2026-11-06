@@ -91,28 +91,53 @@ window.__ModuleLoader__.load({
 		}
 
 		function PurgeSection() {
-			const [state, setState] = react.useState({ loading: true, data: null });
+			const [state, setState] = react.useState({ loading: true, data: null, enabled: true });
 			const [refreshing, setRefreshing] = react.useState(false);
+			const [saving, setSaving] = react.useState(false);
 
 			const load = react.useCallback((manual) => {
 				if (manual) setRefreshing(true);
-				return getJson(apiUrl("/dsh-purge/prompt-text")).then((d) => {
-					setState({ loading: false, data: d && d.ok ? d : null });
+				return Promise.all([
+					getJson(apiUrl("/dsh-purge/prompt-text")),
+					getJson(apiUrl("/dsh-purge/inject")),
+				]).then(([text, sw]) => {
+					setState({
+						loading: false,
+						data: text && text.ok ? text : null,
+						enabled: sw && sw.ok ? sw.promptInject !== false : true,
+					});
 					if (manual) setRefreshing(false);
 				});
+			}, []);
+
+			const toggle = react.useCallback((next) => {
+				setSaving(true);
+				fetch(apiUrl("/dsh-purge/inject"), {
+					method: "POST",
+					credentials: "same-origin",
+					headers: { "content-type": "application/json" },
+					body: JSON.stringify({ promptInject: next }),
+				})
+					.then((r) => r.json())
+					.then((d) => {
+						if (d && d.ok) setState((s) => ({ ...s, enabled: d.promptInject }));
+					})
+					.catch(() => {})
+					.then(() => setSaving(false));
 			}, []);
 
 			react.useEffect(() => { load(false); }, [load]);
 
 			const d = state.data;
 			const ok = Boolean(d);
+			const enabled = state.enabled !== false;
 
-			/* 插件装上即生效，没有运行时开关；关闭只能卸载。状态只反映「读到没有」。 */
-			const statusColor = ok ? C.green : C.gray;
-			const statusText = ok ? "已开启" : "读取中";
-			const statusHint = ok
-				? "提示词注入已加载，正文会附加在每个会话的 system prompt 里。停用需卸载插件。"
-				: "正在读取注入正文…";
+			/* 开关状态来自 inject-switch.json；正文是否读到只影响下方预览。 */
+			const statusColor = enabled ? C.green : C.gray;
+			const statusText = enabled ? "已开启" : "已停用";
+			const statusHint = enabled
+				? "注入正文会附加到每个会话的 system prompt 前面。关闭后立即停止注入，下一轮对话生效，无需重启 dsh。"
+				: "已停止注入，dsh 使用原生 system prompt。重新开启后下一轮对话生效，无需重启 dsh。";
 
 			return h("div", {
 				style: {
@@ -141,7 +166,7 @@ window.__ModuleLoader__.load({
 								width: "9px", height: "9px", borderRadius: "50%",
 								flex: "none",
 								background: statusColor,
-								boxShadow: ok ? "0 0 8px rgba(34,197,94,0.75)" : "none",
+								boxShadow: enabled ? "0 0 8px rgba(34,197,94,0.75)" : "none",
 							},
 						}),
 						h("span", {
@@ -164,11 +189,29 @@ window.__ModuleLoader__.load({
 								lineHeight: "16px",
 								fontWeight: "600",
 								letterSpacing: "0.03em",
-								color: ok ? "rgba(34,197,94,0.95)" : C.dim,
-								background: ok ? "rgba(34,197,94,0.14)" : "rgba(150,155,162,0.12)",
-								border: "1px solid " + (ok ? "rgba(34,197,94,0.32)" : C.borderSoft),
+								color: enabled ? "rgba(34,197,94,0.95)" : C.dim,
+								background: enabled ? "rgba(34,197,94,0.14)" : "rgba(150,155,162,0.12)",
+								border: "1px solid " + (enabled ? "rgba(34,197,94,0.32)" : C.borderSoft),
 							},
-						}, ok ? "ACTIVE" : "IDLE"),
+						}, enabled ? "ACTIVE" : "OFF"),
+						h("button", {
+							key: "toggle",
+							onClick: () => toggle(!enabled),
+							disabled: saving,
+							style: {
+								marginLeft: "auto",
+								padding: "5px 12px",
+								borderRadius: "8px",
+								fontSize: "12px",
+								lineHeight: "17px",
+								fontWeight: "600",
+								color: enabled ? C.text : "#0b1a10",
+								background: enabled ? "rgba(255,255,255,0.06)" : "rgba(34,197,94,0.85)",
+								border: "1px solid " + (enabled ? C.border : "rgba(34,197,94,0.5)"),
+								cursor: saving ? "progress" : "pointer",
+								opacity: saving ? "0.6" : "1",
+							},
+						}, saving ? "保存中…" : (enabled ? "关闭注入" : "开启注入")),
 					]),
 					h("div", {
 						key: "hint",
@@ -241,7 +284,7 @@ window.__ModuleLoader__.load({
 								background: "rgba(150,155,162,0.10)",
 								border: "1px solid " + C.borderSoft,
 							},
-						}, "只读"),
+						}, enabled ? "只读" : "只读 · 未注入"),
 						h("button", {
 							key: "r",
 							onClick: () => load(true),

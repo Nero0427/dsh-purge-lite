@@ -7,7 +7,7 @@
 一个只做两件事的插件：把注入正文塞进 `system prompt`，再给宿主打上让它生效的补丁。除此之外的模块全部不存在。
 
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-[![version](https://img.shields.io/badge/version-1.2.2--lite-success.svg)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-1.3.0--lite-success.svg)](CHANGELOG.md)
 [![node](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](https://nodejs.org)
 [![patches](https://img.shields.io/badge/host%20patches-84-informational.svg)](#工作原理)
 [![platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](#兼容性)
@@ -198,6 +198,8 @@ node bin/dsh-purge.js --revert
 | `verbose` | `false` | 控制台输出补丁过程 |
 | `capabilityProtocol` | `true` | 追加一段"如何主动发现 skill / MCP"的说明 |
 | `hooksDenyBypass` | `true` | 审批门按本插件配置放行，不再每条都问 |
+
+另有一个**运行时开关**，不属于上面的 cordis 配置：设置页状态卡上的「关闭注入 / 开启注入」，状态落在 `$DSH_HOME/dsh-purge/inject-switch.json`（字段 `promptInject`，默认 `true`）。关掉后宿主不再往 system prompt 挂注入正文；切换**下一轮对话生效，不用重启 dsh**。它与配置里的 `enabled` 是「与」关系，任一为假即不注入。
 | `anchorMode` | `auto` | `auto` 挂尾部锚点，`off` 立即关闭 |
 | `subagentControl` | `true` | 子代理的审批由本插件接管 |
 
@@ -243,8 +245,10 @@ dsh-purge --help        # 帮助
 | POST | `/dsh-purge/override` | 写入注入文件 |
 | POST | `/dsh-purge/restart` | 重启宿主 |
 | POST | `/dsh-purge/hooks-deny` | 开关审批门绕过 |
+| GET | `/dsh-purge/inject` | 读注入开关状态 |
+| POST | `/dsh-purge/inject` | 写注入开关（body `{"promptInject": boolean}`），下一轮对话生效 |
 
-前端 `client.js` 只调用 `prompt-text` 与 `status`，其余给设置页的按钮用。面板挂在「设置 → Purge」。
+前端 `client.js` 调用 `prompt-text`、`status` 与 `inject`，其余给设置页的按钮用。面板挂在「设置 → Purge」。
 
 ## 工作原理
 
@@ -291,6 +295,7 @@ dsh-purge --help        # 帮助
 │   ├── profile-insert.js       profile bundle 自愈
 │   ├── extract-asar.js         asar 解包 / 回写
 │   ├── hooks-deny.js           审批门绕过
+│   ├── inject-switch.js        注入总开关（运行时，下一轮生效）
 │   ├── anchor.js               尾部锚点
 │   ├── capability-protocol.js  能力发现协议段
 │   ├── subagent-control.js     子代理审批接管
@@ -349,6 +354,7 @@ dsh-purge --help        # 帮助
 
 | 版本 | 要点 |
 |---|---|
+| `1.3.0-lite` | 设置页新增注入总开关；修复手改正文被误判成插件默认并覆盖 |
 | `1.2.2-lite` | 修复 git 源安装后构建授权被反复清除，市场点更新不再被拦 |
 | `1.2.1-lite` | 补 GitHub 仓库安装与更新说明，代码未改 |
 | `1.2.0-lite` | 删除 13 个模块（在线更新、技能库、回退、续跑、演练台），补丁 86 → 84 |

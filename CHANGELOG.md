@@ -12,6 +12,33 @@
 - 补丁表从 84 条裁剪到约 35 条（提示词层 + 审批门 + 沙箱），逐组验证依赖关系。
 - `drifted` 补丁的自动 pattern 更新（当前只能等新版本）。
 
+## [1.3.0-lite] - 2026-11-07
+
+设置页新增注入总开关；修复「基于默认正文增补的内容会被当成插件默认并覆盖」的判定错误。补丁表未改。
+
+### Added
+
+- `lib/inject-switch.js`：注入开关，落盘在 `$DSH_HOME/dsh-purge/inject-switch.json`，字段 `promptInject`，缺文件或坏 JSON 一律按「开」处理。
+- 路由 `GET /dsh-purge/inject`（读状态）与 `POST /dsh-purge/inject`（写状态，body `{"promptInject": boolean}`）。
+- 设置页状态卡增加「开启注入 / 关闭注入」按钮，并标明切换后**下一轮对话生效、无需重启 dsh**。
+- `/dsh-purge/status` 增加 `prompt_inject` 字段。
+
+### Fixed
+
+- `isKeepableUserOverride()` 与 `ensureOverrideFile()` 不再用 `looksLikePluginDefault()` 决定是否覆盖。原先「文本含三个默认标记即算插件默认」的判据，会把用户基于默认原文增补的正文判成默认，下一轮 `syncPromptInjectOnDiskSync()` 直接拿加密槽盖掉，手改内容留存不下来。现在只看 hash 与 `override-state.json`：与当前槽、上次 seed、上次插件写入三者都不等，即视为用户正文并永久保留；`customized === true` 直接保留。
+- `looksLikePluginDefault()` 保留，但降级为展示/诊断用途，不再参与覆盖判定。
+
+### Changed
+
+- `rewriteLiveAssembly()` 的缓存签名改用 `injectAllowedNow()` 的统一结果，切换开关后不会命中上一轮的改写缓存。
+
+### Test
+
+- 纯默认正文 → `isKeepableUserOverride` = false，可被新版本刷新。
+- 默认 + 两行 → true，`syncPromptInjectOnDiskSync()` 返回 `{action:"keep",reason:"user_custom"}`，内容不变。
+- 带 ChatML 头 + 增补正文 → true，真实文件同步后字节数与内容均未变。
+- 开关：默认 true → 写入 false → 读到 false → 写回 true，全程无需重启进程。
+
 ## [1.2.2-lite] - 2026-11-05
 
 修复从 GitHub 仓库安装后，市场「点击更新」被构建授权反复拦住的问题。补丁表与运行时逻辑未改。
