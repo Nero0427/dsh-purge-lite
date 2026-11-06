@@ -7,7 +7,7 @@
 一个只做两件事的插件：把注入正文塞进 `system prompt`，再给宿主打上让它生效的补丁。除此之外的模块全部不存在。
 
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-[![version](https://img.shields.io/badge/version-1.3.0--lite-success.svg)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-1.4.0--lite-success.svg)](CHANGELOG.md)
 [![node](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](https://nodejs.org)
 [![patches](https://img.shields.io/badge/host%20patches-84-informational.svg)](#工作原理)
 [![platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](#兼容性)
@@ -354,6 +354,7 @@ dsh-purge --help        # 帮助
 
 | 版本 | 要点 |
 |---|---|
+| `1.4.0-lite` | 注入模式分段（full/general/pentest）+ ops_bash 超时上限收紧 |
 | `1.3.0-lite` | 设置页新增注入总开关；修复手改正文被误判成插件默认并覆盖 |
 | `1.2.2-lite` | 修复 git 源安装后构建授权被反复清除，市场点更新不再被拦 |
 | `1.2.1-lite` | 补 GitHub 仓库安装与更新说明，代码未改 |

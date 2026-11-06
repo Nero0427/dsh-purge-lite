@@ -12,6 +12,33 @@
 - 补丁表从 84 条裁剪到约 35 条（提示词层 + 审批门 + 沙箱），逐组验证依赖关系。
 - `drifted` 补丁的自动 pattern 更新（当前只能等新版本）。
 
+## [1.4.0-lite] - 2026-11-07
+
+注入正文支持按模式分段；新增 `ops_bash` 前台超时上限的手工收紧命令。默认配置与 1.3.0 完全一致。
+
+### Added
+
+- `lib/sections.js`：按模式组合注入正文。`full`（默认）注入整份 `prompt-inject.md`；`general` 只注入 `$DSH_HOME/dsh-purge/sections/core.md`；其它模式注入 `core.md` + `<mode>.md`。任一文件缺失都降级回全量，不会因为分段文件没放好而少注入。
+- `inject-switch.json` 增加 `mode` 字段，默认 `full`；`GET/POST /dsh-purge/inject` 与 `/dsh-purge/status` 同步支持，设置页状态卡增加模式下拉，CLI 增加 `--mode <full|general|pentest>`。
+- `lib/bash-budget.js` + `--bash-budget [ms]` / `--bash-budget-revert`：把 `dsh-ops` 的 `MAX_BASH_TIMEOUT_MS` 从 `2_147_483_647` 收到 180 秒。超时后 `ops_bash` 会走 `kind: "promoted"` 把命令转成后台 job（不杀进程），主循环继续，之后用 `job_output` 取结果。幂等、带备份、可还原。
+
+### Changed
+
+- `refreshHungOperator()` 的缓存键加入 `inject-switch.json` 的 mtime：切模式只改这个文件，不加的话会命中上一轮的旧正文。
+- 全量模式改为直读磁盘、不再优先 `committed`：`committed` 可能是上一次分段模式钉进去的正文，切回 `full` 时若还认它，用户会看到旧内容一直被复用。
+
+### Notes
+
+- `general` 模式的收益是实测的：`prompt-inject.md` 26,275 B → `core.md` 19,427 B，省 26%，代价是不再注入 CTF 两段与渗透模板（CANNED WORKFLOWS / web-pentest canned slots / WEB PENTEST ROUTING）。
+- `pentest` 模式等于全量（core + 渗透模板 = 原文），只是语义明确，不省体积。
+
+### Test
+
+- `full` 下 `composeInjection()` 返回 `null`，走原有 `resolveInjectText` 路径，行为与 1.3.0 一致。
+- `pentest` 组合 21,494 字符，含 EXECUTION ECONOMY / CTF Contract / ffuf 模板 / House Rules，ChatML 信封 1 开 1 闭。
+- 模式写入 → 读取 → 还原，全程不重启进程。
+- `--bash-budget`：幂等（`current 180000 -> 180000`）、`--bash-budget-revert` 还原、再 apply（`2147483647 -> 180000`）三步走通。
+
 ## [1.3.0-lite] - 2026-11-07
 
 设置页新增注入总开关；修复「基于默认正文增补的内容会被当成插件默认并覆盖」的判定错误。补丁表未改。

@@ -12,7 +12,9 @@
 import * as core from "../lib/core.js";
 import * as rules from "../lib/rules.js";
 import * as reapply from "../lib/reapply.js";
-import { isInjectEnabled } from "../lib/inject-switch.js";
+import { isInjectEnabled, injectMode, setInjectSwitch } from "../lib/inject-switch.js";
+import { listModes } from "../lib/sections.js";
+import * as bashBudget from "../lib/bash-budget.js";
 
 const args = process.argv.slice(2);
 
@@ -35,6 +37,7 @@ function printStatus(state) {
   out.push(`  注入文件       ${state.override_path}`);
   out.push(`  注入状态       ${state.override_status}`);
   out.push(`  注入开关       ${isInjectEnabled(state.dsh_home || core.findDshHome() || "") ? "开 / on" : "关 / off（下一轮对话起不注入）"}`);
+  out.push(`  注入模式       ${injectMode(state.dsh_home || core.findDshHome() || "")}（可选：full / general / ${listModes(state.dsh_home || core.findDshHome() || "").join(" / ")}）`);
   out.push("");
   out.push(`  补丁 ${state.patches_applied}/${core.ALL_PATCHES.length} 已清洗, ${state.patches_pending} 待清洗`
     + (state.patches_drifted ? `, ${state.patches_drifted} 漂移（官方原文已改，需更新 pattern）` : ""));
@@ -53,7 +56,7 @@ function printStatus(state) {
 }
 
 async function main() {
-  const mode = args.find((a) => ["--apply", "--revert", "--uninstall", "--status", "--edit", "--help"].includes(a));
+  const mode = args.find((a) => ["--apply", "--revert", "--uninstall", "--status", "--edit", "--help", "--bash-budget", "--bash-budget-revert", "--mode"].includes(a));
 
   if (mode === "--help" || args.includes("-h")) {
     console.log(`dsh-purge 用法:
@@ -62,7 +65,39 @@ async function main() {
   dsh-purge --revert     回滚还原
   dsh-purge --uninstall  卸载插件（已应用则先还原）
   dsh-purge --edit       编辑注入文件 prompt-inject.md
+  dsh-purge --mode <full|general|pentest>  切换注入模式（下一轮对话生效）
+  dsh-purge --bash-budget [ms]   把 ops_bash 前台超时上限收到指定毫秒（默认 180000）
+  dsh-purge --bash-budget-revert 还原 ops_bash 超时上限
   dsh-purge --help       帮助`);
+    return;
+  }
+
+  if (mode === "--mode") {
+    const home = core.findDshHome() || "";
+    const value = args[args.indexOf("--mode") + 1] || "";
+    if (!home) { console.error("未定位 DSH_HOME"); process.exitCode = 1; return; }
+    const allowed = ["full", "general", ...listModes(home)];
+    if (!allowed.includes(value)) {
+      console.log(`未知模式 ${JSON.stringify(value)}；可选：${allowed.join(" / ")}`);
+      process.exitCode = 1;
+      return;
+    }
+    const saved = setInjectSwitch(home, { mode: value });
+    console.log(`注入模式已切换为 ${saved.mode}（下一轮对话生效）`);
+    return;
+  }
+
+  if (mode === "--bash-budget" || mode === "--bash-budget-revert") {
+    const home = core.findDshHome() || "";
+    if (!home) { console.error("未定位 DSH_HOME"); process.exitCode = 1; return; }
+    const targets = bashBudget.listBashBudgetTargets(home);
+    if (!targets.length) { console.log("未找到 dsh-ops 的 constants.js，跳过"); return; }
+    for (const fp of targets) {
+      const r = mode === "--bash-budget-revert"
+        ? bashBudget.revertBashBudget(fp)
+        : bashBudget.applyBashBudget(fp, Number(args.find((a) => /^\d+$/.test(a)) || bashBudget.DEFAULT_BASH_BUDGET_MS));
+      console.log(`  ${r.action.padEnd(8)} ${fp}` + (r.from !== undefined ? `  ${r.from} -> ${r.to}` : "") + (r.reason ? `  (${r.reason})` : ""));
+    }
     return;
   }
 

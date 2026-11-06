@@ -1,35 +1,44 @@
-# 1.3.0-lite
+# 1.4.0-lite
 
-设置页新增注入总开关；修掉「自己往正文里加几句，下一轮被插件自动改回去」的判定错误。宿主补丁表未动。
+注入正文支持按模式分段；新增 `ops_bash` 前台超时上限的收紧命令。**默认配置与 1.3.0 完全一致，不选模式就什么都没变。**
 
-## 问题
+## 为什么
 
-此前判定「这份正文是不是插件出厂默认」只看三个字符串：`<|im_start|>system:`、`<project_instructions>`、`Little Code Sauce`。三者齐全就算默认——于是**任何基于默认原文的增补都会被判成默认**：下一轮 `syncPromptInjectOnDiskSync()` 跑起来，直接拿加密槽把文件覆盖回去。手改的正文根本留不住，且因为该判断排在 `customized` 检查之前，在设置框里点过保存也救不回来。
+两处实测出来的浪费：
 
-## 修了什么
-
-- 覆盖判定改看 hash 与 `override-state.json`：正文与当前加密槽、上次 seed、上次插件写入三者都不等，就认定为用户自己的稿，永久保留；`customized === true` 直接保留。`looksLikePluginDefault()` 降级为展示用途，不再决定要不要覆盖。
-- `ensureOverrideFile()` 同步去掉这条误判，`--apply` 不会再把用户增补的正文刷回默认。
+1. 注入正文 26 KB 每轮全量重发，其中约 6.8 KB 只有做渗透时才用得上（CTF 两段 + CANNED WORKFLOWS + web-pentest canned slots + WEB PENTEST ROUTING）。
+2. `dsh-ops` 把 `ops_bash` 的 `MAX_BASH_TIMEOUT_MS` 设成 `2_147_483_647`（约 24.8 天）。一个会话里 12% 的调用显式传了 `timeoutMs`，几条把单步阻塞拖到 300–480 秒。
 
 ## 加了什么
 
-- 设置页状态卡多一个「关闭注入 / 开启注入」按钮，状态来自 `$DSH_HOME/dsh-purge/inject-switch.json`（字段 `promptInject`）。
-- 关闭后宿主不再往 system prompt 前面挂注入正文，dsh 回到原生提示词。**切换下一轮对话生效，不需要重启 dsh**——注入正文本来就是每步重新拼的。
-- 新路由：`GET /dsh-purge/inject` 读状态，`POST /dsh-purge/inject` 写状态。`/dsh-purge/status` 增加 `prompt_inject` 字段。
-- 缺文件、JSON 坏、字段类型不对，一律按「开」处理：插件装歪了不该顺带把注入也关掉。
+**按模式注入**（`lib/sections.js`）
+
+- `full`（默认）：注入整份 `prompt-inject.md`，行为不变。
+- `general`：只注入 `$DSH_HOME/dsh-purge/sections/core.md`，实测 26,275 B → 19,427 B，**省 26%**。
+- `pentest`：`core.md` + `sections/pentest.md`，等于全量（渗透模板本来就该在），只是语义明确。
+- 设置页状态卡多了模式下拉，CLI 是 `--mode <full|general|pentest>`。切换**下一轮对话生效，不用重启 dsh**。
+- 分割文件缺失时自动降级回全量——宁可多注入，不会因为文件没放好就少一块。
+
+**`ops_bash` 超时上限收紧**（`lib/bash-budget.js`）
+
+- `--bash-budget [ms]`：把 `MAX_BASH_TIMEOUT_MS` 收到 180 秒，默认就这么用。
+- `--bash-budget-revert`：还原。
+- 为什么安全：`dsh-ops` 的前台超时走 `kind: "promoted"`，把还在跑的命令**转成后台 job，不杀进程**，主循环继续，之后用 `job_output` 取结果。所以上限收紧只减少串行等待，不丢工作。
+- `dsh-ops` 更新会覆盖这处改动，升级后重跑一次 `--bash-budget` 即可；备份在同目录 `constants.js.dshpurge.bak`。
+
+## 顺手修的两处
+
+- `refreshHungOperator()` 的缓存键加入 `inject-switch.json` 的 mtime。不加的话切模式只会改这个文件，缓存照样命中上一轮的旧正文，表现为「选了没反应」。
+- 全量模式改为直读磁盘、不再优先内存里的 `committed`。`committed` 可能是上一次分段模式钉进去的正文，切回 `full` 时若还认它，旧内容会一直被复用。
 
 ## 从旧版升级
-
-市场点「更新」只替换 `node_modules` 里的插件文件，宿主里已打的补丁不会自动重打：
 
 ```bash
 node bin/dsh-purge.js --apply
 node bin/dsh-purge.js --status
 ```
 
-本版未改补丁表，`--apply` 是幂等的，直接跑即可，不必先 `--revert`。
-
-升级前手改过 `prompt-inject.md` 的，这次不会再被覆盖；如果之前为了躲覆盖删过 `<|im_start|>system:` 头，可以加回去，现在的判定不看这个标记。
+本版未改宿主补丁表，`--apply` 幂等。想试分段就 `--mode general`，想恢复 `--mode full`。
 
 ## 安装
 
@@ -38,7 +47,7 @@ cd <DSH_HOME>/profiles/desktop
 pnpm add github:Nero0427/dsh-purge-lite
 ```
 
-或者下载本页的 `dsh-purge-1.3.0-lite.zip`，解压到 `<DSH_HOME>/profiles/desktop/node_modules/dsh-purge`，然后运行 `node .../scripts/ensure-profile-bundle.mjs`。
+或者下载 `dsh-purge-1.4.0-lite.zip`，解压到 `<DSH_HOME>/profiles/desktop/node_modules/dsh-purge`，再跑 `node .../scripts/ensure-profile-bundle.mjs`。
 
 ## 完整变更
 

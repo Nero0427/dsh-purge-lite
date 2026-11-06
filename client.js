@@ -91,7 +91,9 @@ window.__ModuleLoader__.load({
 		}
 
 		function PurgeSection() {
-			const [state, setState] = react.useState({ loading: true, data: null, enabled: true });
+			const [state, setState] = react.useState({
+				loading: true, data: null, enabled: true, mode: "full", modes: ["full"],
+			});
 			const [refreshing, setRefreshing] = react.useState(false);
 			const [saving, setSaving] = react.useState(false);
 
@@ -105,26 +107,37 @@ window.__ModuleLoader__.load({
 						loading: false,
 						data: text && text.ok ? text : null,
 						enabled: sw && sw.ok ? sw.promptInject !== false : true,
+						mode: sw && sw.ok && sw.mode ? sw.mode : "full",
+						modes: sw && sw.ok && Array.isArray(sw.modes) && sw.modes.length ? sw.modes : ["full"],
 					});
 					if (manual) setRefreshing(false);
 				});
 			}, []);
 
-			const toggle = react.useCallback((next) => {
+			const post = react.useCallback((body) => {
 				setSaving(true);
-				fetch(apiUrl("/dsh-purge/inject"), {
+				return fetch(apiUrl("/dsh-purge/inject"), {
 					method: "POST",
 					credentials: "same-origin",
 					headers: { "content-type": "application/json" },
-					body: JSON.stringify({ promptInject: next }),
+					body: JSON.stringify(body),
 				})
 					.then((r) => r.json())
 					.then((d) => {
-						if (d && d.ok) setState((s) => ({ ...s, enabled: d.promptInject }));
+						if (d && d.ok) {
+							setState((s) => ({
+								...s,
+								enabled: typeof d.promptInject === "boolean" ? d.promptInject : s.enabled,
+								mode: d.mode || s.mode,
+							}));
+						}
 					})
 					.catch(() => {})
 					.then(() => setSaving(false));
 			}, []);
+
+			const toggle = react.useCallback((next) => post({ promptInject: next }), [post]);
+			const setMode = react.useCallback((mode) => post({ mode }), [post]);
 
 			react.useEffect(() => { load(false); }, [load]);
 
@@ -217,6 +230,35 @@ window.__ModuleLoader__.load({
 						key: "hint",
 						style: { marginTop: "7px", fontSize: "12.5px", lineHeight: "19px", color: C.sub },
 					}, statusHint),
+					h("div", {
+						key: "mode",
+						style: { marginTop: "12px", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" },
+					}, [
+						h("span", {
+							key: "k",
+							style: { flex: "none", fontSize: "12px", color: C.dim },
+						}, "注入模式"),
+						h("select", {
+							key: "s",
+							value: state.mode,
+							disabled: saving || !enabled,
+							onChange: (e) => setMode(e.target.value),
+							style: {
+								padding: "4px 8px",
+								borderRadius: "7px",
+								fontSize: "12px",
+								lineHeight: "18px",
+								color: C.text,
+								background: C.bgDeep,
+								border: "1px solid " + C.border,
+								cursor: saving ? "progress" : "pointer",
+							},
+						}, state.modes.map((m) => h("option", { key: m, value: m }, m))),
+						h("span", {
+							key: "h",
+							style: { fontSize: "11.5px", color: C.dim },
+						}, "full 注入全文；general 只留地基，约省 26%；下一轮对话生效"),
+					]),
 				]),
 
 				/* 统计 */
