@@ -12,6 +12,7 @@
 import * as core from "../lib/core.js";
 import * as rules from "../lib/rules.js";
 import * as reapply from "../lib/reapply.js";
+import { isInjectEnabled } from "../lib/inject-switch.js";
 
 const args = process.argv.slice(2);
 
@@ -33,6 +34,7 @@ function printStatus(state) {
   out.push(`  备份 / backup  ${state.has_backup ? "有 / yes" : "无 / no"}`);
   out.push(`  注入文件       ${state.override_path}`);
   out.push(`  注入状态       ${state.override_status}`);
+  out.push(`  注入开关       ${isInjectEnabled(state.dsh_home || core.findDshHome() || "") ? "开 / on" : "关 / off（下一轮对话起不注入）"}`);
   out.push("");
   out.push(`  补丁 ${state.patches_applied}/${core.ALL_PATCHES.length} 已清洗, ${state.patches_pending} 待清洗`
     + (state.patches_drifted ? `, ${state.patches_drifted} 漂移（官方原文已改，需更新 pattern）` : ""));
