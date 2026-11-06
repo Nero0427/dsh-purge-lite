@@ -1,9 +1,9 @@
 /**
- * 浏览器半区：设置页的只读状态面板。
+ * 浏览器半区：设置页状态面板。可切换注入开关与注入模式，正文本身仍只读。
  *
- * 面板只读两个接口：`/dsh-purge/status` 与 `/dsh-purge/prompt-text`。
- * 不做编辑、不做保存——注入正文属于用户文件，改它请直接改 `prompt-inject.md`，
- * 或者用 `dsh-purge --edit`。
+ * 读：`/dsh-purge/prompt-text`（正文预览）与 `/dsh-purge/inject`（开关 + 模式）。
+ * 写：向 `/dsh-purge/inject` POST `{promptInject}` 或 `{mode}`，下一轮对话生效。
+ * 正文本身不在这里编辑——它是用户文件，改它请直接改 `prompt-inject.md` 或用 `--edit`。
  *
  * 用同源相对路径通信，不写死端口（桌面端 HTTP 服务端口是随机的）。
  *

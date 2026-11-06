@@ -317,7 +317,7 @@ dsh-purge --help        # 帮助
 │   ├── asset-table.js          加密正文解密槽（不是资产库）
 │   ├── uninstall.js            卸载
 │   └── ...                     其余为补丁工具与策略模块
-├── client.js                   设置页只读面板（浏览器半区）
+├── client.js                   设置页状态面板（浏览器半区）：开关与模式选择
 ├── cordis.patch.yml            bundle patch
 ├── scripts/
 │   └── ensure-profile-bundle.mjs   postinstall 注册
