@@ -12,7 +12,42 @@
 - 补丁表从 84 条裁剪到约 35 条（提示词层 + 审批门 + 沙箱），逐组验证依赖关系。
 - `drifted` 补丁的自动 pattern 更新（当前只能等新版本）。
 
+## [1.5.0-lite] - 2026-11-07
+
+**首个完整支持官方宿主 `0.2.2-rc.1` 的版本。** 1.4.2-lite 只是放宽了版本声明，11 条补丁在新宿主上仍然失配；本版把功能补齐，并明确写出「哪个版本支持哪个版本」。
+
+### Added
+
+- `HOST_VARIANTS_022RC1` 适配层：给 11 条受影响的补丁追加 0.2.2-rc.1 原文候选，`ALL_PATCHES` 组装后统一挂载。旧版 pattern 一条未删，引擎逐条尝试命中，rc.2 / rc.5 / 0.2.2-rc.1 共用同一张 84 条补丁表。
+- `targetFiles` 补齐官方拆包后的新路径：`dsh-deliverable-file-references`、`dsh-tool-executor-ptc`（`lib/index.js` 与 `lib/types/ptc.js`）、`dsh-tools/lib/pipeline.js` 与 `lib/types/pipeline.js`。旧宿主不含这些文件，自动回落到原路径。
+- README 新增「版本支持矩阵」：按插件版本和按宿主版本两个方向列明支持关系与破甲功能完整度。
+
+### Fixed
+
+- `#14` 沙箱授信：`displayReason` 改为 `escalationDisplayReason()` 调用后的新原文。
+- `#17` 观察策略：`editIntent` 被抽成 `requirePresent()` 后的新原文（`writeIntent` 旧 pattern 仍命中）。
+- `#40` system-prompt：新版 `assemble` 早退分支与最终返回都多了 `tools` 字段，注入逻辑同步保留该字段。
+- `#54` 交付物提示词、`#60` PTC/run_code 描述、`#62` 工具审批分支：三处代码被搬到新包/新文件，补上目标路径后原有 pattern 直接命中；给这三条加 `softSettle`，避免官方搬走代码后留下的旧副本被误报为上游漂移。
+- `#67` agent-loop：循环体多包一层 `try`，缩进 4 tab → 5 tab。
+- `#74` preStep：`assemble` 前多了 `model.current()` / `tools.resolve()`，参数结构也变了，在 `try` 内重新挂载 prepare 钩子。
+- `#82` / `#84` / `#92` 桌面壳 `lib/main.js`：import 后的 `//#region` 变成打包器生成路径、`close` 回调签名由 `(code, signal)` 变 `(code)`、`code=0` 仍走 else 弹错，三条分别追加新候选。
+
+### Verified（离线补丁层）
+
+- 官方安装包 `app.asar`（213,202,918 B，20,519 文件）导出全新干净树，跑完整 `applyPatches`：`applied 71` / `na 10` / `missing_file 2` / `skipped 1`，**`drifted 0`、`pending 0`、报告无异常行**。
+- 11 条修复项的 marker 11/11 真实落盘；15 条破甲语义断言（审批放行、注入保留、提示词移除、code=0 不弹错等）15/15 通过。
+- 48 个被改写的 `.js` 文件 `node --check` 全部通过；桌面壳 5 条补丁单独验证全部 `applied`。
+- rc.5 真实宿主 `--status` 与改动前逐条比对，差异 0；隔离验证前后真实 `~/.dsh` 快照哈希一致。
+
+### Upgrade notes
+
+- 从任意旧版升级：先在旧目录 `--revert`，替换插件目录，再 `--apply --status`，重启 DSH。
+- 宿主升到 0.2.2-rc.1：先把第三方 `dsh-ops 0.4.4` 升到 `0.5.0`（否则 `dsh-app-boot` 拒绝加载）；覆盖安装会还原 `app.asar` 并摊掉全部补丁，需重新解包后重打；`app-update.yml` 会恢复 nightly 源，锁版本需再改回 `disabled.invalid`。
+- 端到端模型行为仍需升级后人工发一条消息确认；离线验证只证明补丁正确写进宿主文件。
+
 ## [1.4.2-lite] - 2026-11-07
+
+> **已被 1.5.0-lite 取代**：本版只放宽版本声明，在 0.2.2-rc.1 上 11 条补丁失配，请勿在升级后的宿主上使用。
 
 兼容版本，运行时代码与补丁表未改。
 
