@@ -77,6 +77,14 @@ DeepSeek Harness（下称 DSH）在每次请求前会装配 `system prompt`：�
 
 所以「从市场装了插件」和「插件已经生效」是两个状态，中间隔着一次 `--apply`。
 
+**为什么不能开箱即用**——不是权限没给够，是架构决定的：
+
+1. 官方发行把整个应用封在 `resources/app.asar` 里，84 条 pattern 指向 asar 内部的原文，不先解包就没有可改的文件；
+2. 补丁要写 `Program Files` 下的系统目录，Windows 默认只读，必须提权；
+3. 插件市场只能把 JS 包装进 `~/.dsh`，既没有权限、也不应该替用户改宿主安装目录，提权动作必须由用户自己发起；
+4. 补丁是逐字文本替换、绑定宿主版本，宿主一升级原文变了就 `drifted`，只能等插件补新 pattern；
+5. Electron 优先加载 `resources/app/` 目录——这是解包后能生效的原因，也是重装会把解包目录还原掉的原因。
+
 ### 方式一：Release 解压（推荐）
 
 1. 到 [Releases](https://github.com/Nero0427/dsh-purge-lite/releases) 下载最新 `dsh-purge-<version>.zip`。
@@ -156,29 +164,80 @@ node bin/dsh-purge.js --status
 
 ## 快速开始
 
-```bash
-# 1. 定位宿主包根（必须指向含 dsh-agent-instructions/lib 的 @deepseek-ai 目录）
-#    Windows PowerShell
-$env:DSH_BASE = "<DeepSeek 安装目录>/resources/app/dsh/node_modules/@deepseek-ai"
-#    bash
-export DSH_BASE="<DeepSeek 安装目录>/resources/app/dsh/node_modules/@deepseek-ai"
+从装好到生效的完整流程。按 Windows 桌面版写，其他平台把路径换成对应位置，命令一致。**全程用管理员终端**——`--apply` 要写 `Program Files`。
 
-# 2. 首次写一份默认注入文件（会打开编辑器）
-node bin/dsh-purge.js --edit
+### 1. 确认插件已就位
 
-# 3. 应用
-node bin/dsh-purge.js --apply
+市场安装或 Release 解压后，目录应该是：
 
-# 4. 重启 DSH
+```
+<DSH_HOME>/profiles/desktop/node_modules/dsh-purge
 ```
 
-`--apply` 做四件事：清洗 84 条宿主补丁、注入 shim、落下 `prompt-inject.md`、写应用戳（避免下次启动重复打补丁）。
+Windows 默认在 `%USERPROFILE%\.dsh\profiles\desktop\node_modules\dsh-purge`。
 
-回滚：
+### 2. 开管理员终端并进入插件目录
 
-```bash
+开始菜单搜 PowerShell → 右键「以管理员身份运行」：
+
+```powershell
+cd "$env:USERPROFILE\.dsh\profiles\desktop\node_modules\dsh-purge"
+```
+
+### 3. 指定宿主包根
+
+```powershell
+$env:DSH_BASE = "<DeepSeek 安装目录>\resources\app\dsh\node_modules\@deepseek-ai"
+$env:DSH_SURFACE = "desktop"
+```
+
+`DSH_BASE` 必须指到**包含** `dsh-agent-instructions\lib` 的那一层 `@deepseek-ai`，不是 `node_modules`，也不是 `resources\app`。指错会报「插件根未定位」。
+
+### 4. 先看现状
+
+```powershell
+node bin/dsh-purge.js --status
+```
+
+没打过补丁的宿主会看到大面积 `pending` / `drifted`。这一步只读，不改任何文件。
+
+### 5. 应用
+
+```powershell
+node bin/dsh-purge.js --apply
+```
+
+- 宿主还是密封 `app.asar` 时，这一步会先解包成 `resources/app/`，期间可能重启客户端；DSH 正在运行就先退出。
+- 少数机器上 `schtasks.exe` 会被安全软件拦，日志会有提示，主流程不受影响。
+- 成功后写应用戳，下次启动不会重复打。
+
+### 6. 验证
+
+```powershell
+node bin/dsh-purge.js --status
+```
+
+逐行看：`applied` 才算落到宿主；还有 `pending` 就重跑第 5 步；出现 `drifted` 说明宿主原文和 pattern 对不上，等插件更新，不要强打。
+
+### 7. 重启并确认
+
+手动启动 DSH（桌面宿主禁用了自重启）。发一条消息，看回复是否按你的注入正文来；设置页面板也能看到状态。
+
+### 日常三件事
+
+| 想做什么 | 怎么做 |
+|---|---|
+| 改注入正文 | `node bin/dsh-purge.js --edit`，或直接改 `<DSH_HOME>/prompt-inject.md`，下一轮组装生效 |
+| 开 / 关注入 | 设置页开关，或改 `<DSH_HOME>/dsh-purge/inject-switch.json` 的 `promptInject` |
+| 看补丁状态 | `node bin/dsh-purge.js --status`，或设置页面板 |
+
+### 回滚
+
+```powershell
 node bin/dsh-purge.js --revert
 ```
+
+逐条还原宿主原文，不删 `prompt-inject.md`（那是你的文件）。
 
 > **升级提示**：从 1.1.90 升级到 1.2.0 必须 `--revert` 再 `--apply`。旧版往 `main.js` 写过补丁 #45/#46（桌面更新接管），新版补丁表里已移除，只有先还原才能把那段代码清干净。
 

@@ -10,6 +10,8 @@
 ### Docs
 
 - README 安装章节新增「必读：补丁不会随插件自动生效」：补丁表随插件发布，但必须 `--apply` 写进宿主文件才生效；`autoApplyOnStart` 默认 `false`；密封 `app.asar` 会跳过启动重打、只认手动 Apply；市场「更新」不重打补丁；Windows 写 `Program Files` 需要管理员权限。
+- 「必读」补「为什么不能开箱即用」：asar 打包、系统目录权限、市场只能装 JS 包、pattern 绑宿主版本、Electron 目录优先加载。
+- 「快速开始」从原来的 4 行命令改成 7 步完整教程（管理员终端、`DSH_BASE` / `DSH_SURFACE`、`--status` 基线、`--apply` 解包与重启、`--status` 验收、手动重启确认），另加「日常三件事」表与回滚说明。
 - 常见问题补两条：「装了插件但注入 / 审批没变化」「官方更新宿主后补丁全变 `drifted`」。
 
 ### Planned
