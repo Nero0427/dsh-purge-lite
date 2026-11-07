@@ -7,7 +7,7 @@
 一个只做两件事的插件：把注入正文塞进 `system prompt`，再给宿主打上让它生效的补丁。除此之外的模块全部不存在。
 
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-[![version](https://img.shields.io/badge/version-1.4.1--lite-success.svg)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-1.4.2--lite-success.svg)](CHANGELOG.md)
 [![node](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](https://nodejs.org)
 [![patches](https://img.shields.io/badge/host%20patches-84-informational.svg)](#工作原理)
 [![platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](#兼容性)
@@ -60,7 +60,7 @@ DeepSeek Harness（下称 DSH）在每次请求前会装配 `system prompt`：�
 
 ## 安装
 
-> 需要 Node.js ≥ 18，宿主 DeepSeek Harness 支持范围 **0.2.1-rc.2 ～ 0.2.1-rc.5**（在 `package.json` 的 `engines.dsh` 中声明，插件市场据此显示宿主要求）。下文 `<DSH_HOME>` 默认是 `~/.dsh`（Windows 为 `%USERPROFILE%\.dsh`）。
+> 需要 Node.js ≥ 18，宿主 DeepSeek Harness 支持范围 **0.2.1-rc.2 ～ 0.2.2-rc.1**（`engines.dsh: >=0.2.1-rc.2 <0.2.3-0`，插件市场据此显示宿主要求）。**注意**：0.2.2-rc.1 上补丁表仍有 11 条待适配，见「升级」章节与 `CHANGELOG.md` 的 Known Issues。下文 `<DSH_HOME>` 默认是 `~/.dsh`（Windows 为 `%USERPROFILE%\.dsh`）。
 
 **已加入插件市场**：本插件已收录进 [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) 插件目录（[PR #12160](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/12160)，2026-11-07 合并）。在 DSH 内置插件市场搜索 `Nero0427/dsh-purge-lite`，点卡片上的安装即可；市场安装走 `github:` 仓库源，等价于下面的方式三，也能正常收到更新提示。
 
@@ -332,7 +332,7 @@ dsh-purge --help        # 帮助
 | 项 | 范围 |
 |---|---|
 | Node.js | ≥ 18 |
-| 宿主 | DSH `0.2.1-rc.2` / `0.2.1-rc.5`（见 `package.json` 的 `dshTargets`） |
+| 宿主 | DSH `0.2.1-rc.2` / `0.2.1-rc.5` / `0.2.2-rc.1`（见 `package.json` 的 `dshTargets`） |
 | 系统 | Windows（桌面端）、macOS、Linux（web 端） |
 | Cordis | `^4.0.1` (peer) |
 
@@ -371,6 +371,7 @@ dsh-purge --help        # 帮助
 
 | 版本 | 要点 |
 |---|---|
+| `1.4.2-lite` | 宿主声明放宽到 0.2.2-rc.1（兼容版，代码与补丁表未改） |
 | `1.4.1-lite` | 声明宿主 rc.2～rc.5 支持范围 + 插件市场收录说明（维护版） |
 | `1.4.0-lite` | 注入模式分段（full/general/pentest）+ ops_bash 超时上限收紧 |
 | `1.3.0-lite` | 设置页新增注入总开关；修复手改正文被误判成插件默认并覆盖 |
