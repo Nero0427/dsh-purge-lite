@@ -1,6 +1,6 @@
 {
   "name": "dsh-purge",
-  "version": "1.5.2-lite",
+  "version": "1.5.3-lite",
   "description": "DeepSeek Harness 破甲（精简版）：只做提示词注入与宿主补丁。无演练台、无资产库、无技能库、无规则面板、无在线更新，设置页一个只读状态面板。",
   "type": "module",
   "main": "lib/index.js",

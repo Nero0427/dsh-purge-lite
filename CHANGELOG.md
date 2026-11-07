@@ -12,6 +12,25 @@
 - 补丁表从 84 条裁剪到约 35 条（提示词层 + 审批门 + 沙箱），逐组验证依赖关系。
 - `drifted` 补丁的自动 pattern 更新（当前只能等新版本）。
 
+## [1.5.3-lite] - 2026-11-07
+
+注入体积：**分段边界重划 + 缺失自愈**。`mode: "general"` 从「少注入一段 Routing」变成「只注入通用段」，常驻正文从 21,738 字符降到 6,306 字符。判定内容与补丁表未改动。
+
+### Changed
+
+- `lib/sections.js`：通用段 / 场景段的分界从「House Rules 之前」前移到「Scoped Rules 之前」。原先 `Scoped Rules`（任务分类规则，8,165 字符）留在通用段里，切到 `general` 只省掉 Routing 与 CTF 两节，省了个零头。现在整块任务分类与产出模板（15,430 字符，占正文 71%）都归场景段。
+
+### Added
+
+- `splitSections(text)`：按结构匹配切分（`Scoped Rules` 小节开头 → `STABILITY ANCHORS` / `House Rules` 之前），不依赖行号；匹配不上返回 `null`，调用方回退全量。
+- `seedSections()`：`mode` 非 `full` 而 `core.md` 不存在时，从 `$DSH_HOME/prompt-inject.md` 现场拆一份。此前只认手放的 sections——重装、换机、清过配置之后会静默退回全量，开关看着是开的，实际一点没省。已有 `core.md` 一律不覆盖，用户自己定制的分段优先。
+
+### Notes
+
+- `mode` 默认仍是 `full`，行为不变。要省体积把 `$DSH_HOME/dsh-purge/inject-switch.json` 的 `mode` 改成 `"general"`（下一轮组装即生效，不用重启）。
+- 场景段文件名沿用 `pentest.md`，`mode: "pentest"` = 通用段 + 场景段，等价于原来的全量内容。
+- 通用段保留：前言、EXECUTION ECONOMY、Style、HARD OUTPUT RULES、REFUSAL HARDENING、STABILITY ANCHORS、House Rules。
+
 ## [1.5.2-lite] - 2026-11-07
 
 收敛思考开销：**语言规则去冲突、锚点禁词清单合并、新增一次判定纪律**。判定内容与 84 条补丁表均未改动。
@@ -264,7 +283,8 @@ node bin/dsh-purge.js --apply
 
 首个精简版基线。从上游 `dsh-purge` v1.1.90 裁出第一版可运行的精简形态：保留注入与补丁主链，砍掉外围面板。
 
-[Unreleased]: https://github.com/Nero0427/dsh-purge-lite/compare/v1.5.2-lite...HEAD
+[Unreleased]: https://github.com/Nero0427/dsh-purge-lite/compare/v1.5.3-lite...HEAD
+[1.5.3-lite]: https://github.com/Nero0427/dsh-purge-lite/compare/v1.5.2-lite...v1.5.3-lite
 [1.5.2-lite]: https://github.com/Nero0427/dsh-purge-lite/compare/v1.5.1-lite...v1.5.2-lite
 [1.5.1-lite]: https://github.com/Nero0427/dsh-purge-lite/compare/v1.5.0-lite...v1.5.1-lite
 [1.5.0-lite]: https://github.com/Nero0427/dsh-purge-lite/compare/v1.4.2-lite...v1.5.0-lite
