@@ -12,6 +12,29 @@
 - 补丁表从 84 条裁剪到约 35 条（提示词层 + 审批门 + 沙箱），逐组验证依赖关系。
 - `drifted` 补丁的自动 pattern 更新（当前只能等新版本）。
 
+## [1.5.1-lite] - 2026-11-07
+
+修复注入总开关：**关闭后不再残留任何注入内容**。功能与补丁表相对 1.5.0-lite 无变化。
+
+### Fixed
+
+- `registerAnchor()` 增加 `allow` 回调，主锚点 `dsh-purge:anchor` 与子锚点 `dsh-purge:child-anchor` 的 `text` 每轮判运行时开关。此前 `anchorOn()` 只看 `config.enabled` / `config.anchorMode`，关掉 `promptInject` 后 `[OPERATOR ANCHOR — ACTIVE]` 的 9 条规则仍留在 system prompt。
+- `rewriteLiveAssembly()` 在开关关闭时直接返回原生装配，跳过 `rewritePromptAssembly`（它还会 `dropMnemon` 清宿主身份、补 capability 段）；新增导出 `isInjectedName()` / `nativeAssembly()`，按名剔除 `dsh-purge*` / `dshpg-capabilities` / `dsh-wb-memory` 的 sections 与 contexts。
+- 两处 `registerAnchor` 调用（主 ctx 与隔离层）传入 `() => injectAllowedNow(config)`。
+- 更新[版本支持矩阵](README.md#版本支持矩阵)：三个宿主版本均推荐 `1.5.1-lite`；`1.5.0-lite` 补丁完整但开关关闭不彻底。
+
+### Notes
+
+- 开启态行为完全不变：正文 + 锚点 + capability + 记忆段照常注入。
+- 关闭态：`wb-memory` 的 HTTP 路由与 `/memory` 命令仍在，只是不再进 system prompt。
+- 宿主静态补丁（84 条）不随开关变化，其中一条把 `harness:identity` 正文清空；要完全"官方原生"需跑 `--revert` + 重启（会摊掉破甲）。
+- 开关文件 `~/.dsh/dsh-purge/inject-switch.json` 每轮读，切换后不重启也生效；`mode: "general"` 是精简分段模式（用 `sections/core.md`），不是"关"，要整份正文设 `mode: "full"`。
+
+### Verified
+
+- 真实 cordis 4.1.0 + 已打补丁的 `dsh-system-prompt` 装配，**21/21** 断言通过：开启态 6 个注入段全在（prompt 1,523 B）；关闭态锚点 `text` 为 0 字节、注入侧段全剔除、`harness:identity` 等宿主段名保留、prompt 归零。
+- `isInjectedName` 10 个边界用例全对；`lib/index.js` / `lib/anchor.js` `node --check` 通过；84 条补丁状态与上一版一致（`76 applied`，差异 0）。
+
 ## [1.5.0-lite] - 2026-11-07
 
 **首个完整支持官方宿主 `0.2.2-rc.1` 的版本。** 1.4.2-lite 只是放宽了版本声明，11 条补丁在新宿主上仍然失配；本版把功能补齐，并明确写出「哪个版本支持哪个版本」。
@@ -219,7 +242,9 @@ node bin/dsh-purge.js --apply
 
 首个精简版基线。从上游 `dsh-purge` v1.1.90 裁出第一版可运行的精简形态：保留注入与补丁主链，砍掉外围面板。
 
-[Unreleased]: https://github.com/Nero0427/dsh-purge-lite/compare/v1.2.2-lite...HEAD
+[Unreleased]: https://github.com/Nero0427/dsh-purge-lite/compare/v1.5.1-lite...HEAD
+[1.5.1-lite]: https://github.com/Nero0427/dsh-purge-lite/compare/v1.5.0-lite...v1.5.1-lite
+[1.5.0-lite]: https://github.com/Nero0427/dsh-purge-lite/compare/v1.4.2-lite...v1.5.0-lite
 [1.2.2-lite]: https://github.com/Nero0427/dsh-purge-lite/releases/tag/v1.2.2-lite
 [1.2.1-lite]: https://github.com/Nero0427/dsh-purge-lite/releases/tag/v1.2.1-lite
 [1.2.0-lite]: https://github.com/Nero0427/dsh-purge-lite/releases/tag/v1.2.0-lite

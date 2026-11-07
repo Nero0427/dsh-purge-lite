@@ -7,7 +7,7 @@
 一个只做两件事的插件：把注入正文塞进 `system prompt`，再给宿主打上让它生效的补丁。除此之外的模块全部不存在。
 
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-[![version](https://img.shields.io/badge/version-1.5.0--lite-success.svg)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-1.5.1--lite-success.svg)](CHANGELOG.md)
 [![node](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](https://nodejs.org)
 [![patches](https://img.shields.io/badge/host%20patches-84-informational.svg)](#工作原理)
 [![platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](#兼容性)
@@ -348,18 +348,21 @@ dsh-purge --help        # 帮助
 | `≤ 1.4.0-lite` | 未声明 | 完整 | 完整 | 未适配 | 无版本门，宿主不拦截，但补丁只对齐到 rc.5 |
 | `1.4.1-lite` | `>=0.2.1-rc.2 <=0.2.1-rc.5` | 完整 | 完整 | **拒绝加载** | 上限把新宿主挡在 `dsh-app-boot` 兼容性门外 |
 | `1.4.2-lite` | `>=0.2.1-rc.2 <0.2.3-0` | 完整 | 完整 | **能装，功能残缺** | 过渡版：只放宽声明，11 条补丁失配；已由 1.5.0-lite 取代，勿用 |
-| **`1.5.0-lite`** | `>=0.2.1-rc.2 <0.2.3-0` | **完整** | **完整** | **完整** | 首个完整支持 0.2.2-rc.1 的版本，84 条补丁三版全生效 |
+| `1.5.0-lite` | `>=0.2.1-rc.2 <0.2.3-0` | 完整 | 完整 | 完整 | 首个完整支持 0.2.2-rc.1 的版本；注入总开关关闭不彻底，见 1.5.1-lite |
+| **`1.5.1-lite`** | `>=0.2.1-rc.2 <0.2.3-0` | **完整** | **完整** | **完整** | 1.5.0 + 注入总开关修复：关闭 = 原生 system prompt，不残留任何注入段 |
 
 反过来看，按你的宿主版本选插件：
 
 | 宿主版本 | 推荐插件版本 | 升级前必读 |
 |---|---|---|
-| `0.2.1-rc.2` / `0.2.1-rc.5` | `1.5.0-lite` | 从 1.4.x 升级照「升级」章节走 `--revert` → 替换 → `--apply` |
-| `0.2.2-rc.1` | **只能 `1.5.0-lite`** | ① 第三方 `dsh-ops 0.4.4` 声明 `<0.2.2-0`，须先升到 `0.5.0`，否则宿主拒绝加载；② 覆盖安装会还原 `app.asar` 并摊掉全部补丁，需重新解包、`--apply --status`、重启；③ `app-update.yml` 会恢复官方 nightly 源，要锁版本需再改回 `disabled.invalid` |
+| `0.2.1-rc.2` / `0.2.1-rc.5` | `1.5.1-lite` | 从 1.4.x 升级照「升级」章节走 `--revert` → 替换 → `--apply` |
+| `0.2.2-rc.1` | **`1.5.1-lite`**（`1.5.0-lite` 补丁完整但开关关闭不彻底） | ① 第三方 `dsh-ops 0.4.4` 声明 `<0.2.2-0`，须先升到 `0.5.0`，否则宿主拒绝加载；② 覆盖安装会还原 `app.asar` 并摊掉全部补丁，需重新解包、`--apply --status`、重启；③ `app-update.yml` 会恢复官方 nightly 源，要锁版本需再改回 `disabled.invalid` |
 
 **1.5.0-lite 做了什么**：官方 0.2.2-rc.1 改写了沙箱授信、观察策略、system-prompt、agent-loop、桌面壳 `main.js` 的实现，并把交付物提示词迁到 `dsh-deliverable-file-references`、PTC `run_code` 描述迁到 `dsh-tool-executor-ptc`、工具审批分支迁到 `dsh-tools/lib/pipeline.js`。本版给 11 条受影响补丁**追加**新版原文候选、给 4 个目标路径补上迁移后的新文件，旧版 pattern 一条未删——引擎逐条尝试命中，所以三个宿主版本共用同一张 84 条补丁表，不需要按宿主分发不同插件。
 
 **验证口径**（离线补丁层，非运行时）：从官方安装包解出 `app.asar`（213,202,918 B / 20,519 文件）建立干净树，完整跑一遍 `applyPatches` 后 `drifted = 0`、`pending = 0`；11 条修复项的 marker 全部落盘；48 个被改写的 `.js` 文件 `node --check` 全通过；15 条破甲语义断言全通过；桌面壳 5 条补丁单独验证全部 `applied`；在 rc.5 真实宿主上跑 `--status` 与改动前逐条比对，差异 0。**端到端的模型行为仍需你在升级后发一条消息人工确认**——离线验证只能证明补丁正确写进了宿主文件。
+
+**1.5.1-lite 额外修了什么**：注入总开关此前只关掉 `prompt-inject.md` 正文，尾部锚点 `[OPERATOR ANCHOR — ACTIVE]`、capability 段与 `dsh-wb-memory` 记忆段仍会进 system prompt，表现为「关了开关还看得到注入」。本版让关闭态直接返回原生装配、剔除全部注入侧 section / context；开启态行为完全不变。详见 release notes 与 `CHANGELOG.md`。
 
 ## 常见问题
 
@@ -394,6 +397,7 @@ dsh-purge --help        # 帮助
 
 | 版本 | 要点 |
 |---|---|
+| `1.5.1-lite` | **注入总开关修复**：关闭后不再残留锚点 / capability / 记忆段；开启态行为不变 |
 | `1.5.0-lite` | **完整适配 0.2.2-rc.1**：补齐 11 条失配补丁与 4 处路径迁移，rc.2 / rc.5 / 0.2.2-rc.1 三版全生效；新增版本支持矩阵 |
 | `1.4.2-lite` | 过渡版：仅把宿主声明放宽到 0.2.2-rc.1（代码与补丁表未改），在新宿主上功能残缺，已被 1.5.0-lite 取代 |
 | `1.4.1-lite` | 声明宿主 rc.2～rc.5 支持范围 + 插件市场收录说明（维护版） |
