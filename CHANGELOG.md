@@ -7,6 +7,11 @@
 
 ## [Unreleased]
 
+### Docs
+
+- README 安装章节新增「必读：补丁不会随插件自动生效」：补丁表随插件发布，但必须 `--apply` 写进宿主文件才生效；`autoApplyOnStart` 默认 `false`；密封 `app.asar` 会跳过启动重打、只认手动 Apply；市场「更新」不重打补丁；Windows 写 `Program Files` 需要管理员权限。
+- 常见问题补两条：「装了插件但注入 / 审批没变化」「官方更新宿主后补丁全变 `drifted`」。
+
 ### Planned
 
 - 补丁表从 84 条裁剪到约 35 条（提示词层 + 审批门 + 沙箱），逐组验证依赖关系。

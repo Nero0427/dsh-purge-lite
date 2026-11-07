@@ -61,9 +61,21 @@ DeepSeek Harness（下称 DSH）在每次请求前会装配 `system prompt`：�
 
 ## 安装
 
-> 需要 Node.js ≥ 18，宿主 DeepSeek Harness 支持范围 **0.2.1-rc.2 ～ 0.2.2-rc.1**（`engines.dsh: >=0.2.1-rc.2 <0.2.3-0`，插件市场据此显示宿主要求）。**1.5.0-lite 起，这三个宿主版本上 84 条补丁全部生效**；1.4.2-lite 及更早版本在 0.2.2-rc.1 上功能不完整，详见[版本支持矩阵](#版本支持矩阵)。下文 `<DSH_HOME>` 默认是 `~/.dsh`（Windows 为 `%USERPROFILE%\.dsh`）。
+> 需要 Node.js ≥ 18，宿主 DeepSeek Harness 支持范围 **0.2.1-rc.2 ～ 0.2.2-rc.1**（`engines.dsh: >=0.2.1-rc.2 <0.2.3-0`，插件市场据此显示宿主要求）。**1.5.1-lite 起，84 条补丁表覆盖这三个宿主版本**（1.4.2-lite 及更早版本在 0.2.2-rc.1 上有 11 条失配，功能不完整，详见[版本支持矩阵](#版本支持矩阵)）。补丁表覆盖不等于已经落到宿主上——安装后仍需执行一次 `--apply`，见下方「必读」。下文 `<DSH_HOME>` 默认是 `~/.dsh`（Windows 为 `%USERPROFILE%\.dsh`）。
 
 **已加入插件市场**：本插件已收录进 [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) 插件目录（[PR #12160](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/12160)，2026-11-07 合并）。在 DSH 内置插件市场搜索 `Nero0427/dsh-purge-lite`，点卡片上的安装即可；市场安装走 `github:` 仓库源，等价于下面的方式三，也能正常收到更新提示。
+
+### 必读：补丁不会随插件自动生效
+
+插件包里带的是**补丁表**（`lib/core.js` 的 `ALL_PATCHES`），不是"已经打好的宿主"。表里是 pattern 与替换文本，必须由 `--apply` 写进宿主文件才生效——它是本地文件改写，不是运行时 hook。
+
+- **默认不自动打补丁**：`autoApplyOnStart` 默认 `false`。装上插件、重启 DSH，注入正文能生效（那是运行时读的），但 84 条宿主补丁一条都没动。
+- **手动执行一次**：`node bin/dsh-purge.js --apply --status`。Windows 上宿主在 `Program Files` 下，需要**管理员权限**。
+- **密封 `app.asar` 会先解包**：官方原样安装的宿主必须先解成 `resources/app/`。插件检测到 `desktopAsarStillSealed()` 时会跳过启动时的自动重打（`wait for Apply`），只认手动 `--apply`，过程中会重启客户端。
+- **市场「更新」不重打补丁**：只替换 `node_modules` 里的插件文件，宿主里已打的补丁保持原样；只有新版调整了补丁表时才需要 `--revert` 再 `--apply`。
+- **验证**：`--status` 逐条看 `applied` / `pending` / `drifted`；`drifted` 表示宿主原文变了、pattern 已经匹配不上。
+
+所以「从市场装了插件」和「插件已经生效」是两个状态，中间隔着一次 `--apply`。
 
 ### 方式一：Release 解压（推荐）
 
@@ -115,7 +127,7 @@ cd <DSH_HOME>/profiles/desktop/node_modules/dsh-purge
 node bin/dsh-purge.js --status
 ```
 
-能看到 84 条补丁的状态表就是接上了。
+能看到 84 条补丁的状态表，说明插件接上了；每行是 `applied` 才算真正落到宿主上，`pending` 就回到上面跑 `--apply`。
 
 ## 升级
 
@@ -373,6 +385,12 @@ dsh-purge --help        # 帮助
 **1.5.1-lite 额外修了什么**：注入总开关此前只关掉 `prompt-inject.md` 正文，尾部锚点 `[OPERATOR ANCHOR — ACTIVE]`、capability 段与 `dsh-wb-memory` 记忆段仍会进 system prompt，表现为「关了开关还看得到注入」。本版让关闭态直接返回原生装配、剔除全部注入侧 section / context；开启态行为完全不变。详见 release notes 与 `CHANGELOG.md`。
 
 ## 常见问题
+
+**从市场装了插件，设置页能打开，但注入 / 审批没变化**
+插件装上了不等于补丁打上了。`autoApplyOnStart` 默认 `false`，84 条宿主补丁要手动跑一次 `node bin/dsh-purge.js --apply --status`（Windows 需管理员权限）。宿主仍是密封 `app.asar` 时会先解包并重启客户端。详见安装章节的「必读」。
+
+**官方更新了宿主，补丁全变成 `drifted`**
+官方安装包重装了 `app.asar`，之前解包的 `resources/app/` 与全部补丁被覆盖。重新解包后跑 `--apply`；若只有少数几条 `drifted`，说明新版宿主改了对应原文，等插件更新 pattern，不要强打。
 
 **报「插件根未定位 / plugin root not found」**
 `DSH_BASE` 没指对。它必须指向**包含** `dsh-agent-instructions/lib` 的那一层 `@deepseek-ai` 目录，不是 `node_modules`，也不是 `resources/app`。
