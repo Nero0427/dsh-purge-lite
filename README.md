@@ -60,7 +60,9 @@ DeepSeek Harness（下称 DSH）在每次请求前会装配 `system prompt`：�
 
 ## 安装
 
-> 需要 Node.js ≥ 18。下文 `<DSH_HOME>` 默认是 `~/.dsh`（Windows 为 `%USERPROFILE%\.dsh`）。
+> 需要 Node.js ≥ 18，宿主 DeepSeek Harness 支持范围 **0.2.1-rc.2 ～ 0.2.1-rc.5**（在 `package.json` 的 `engines.dsh` 中声明，插件市场据此显示宿主要求）。下文 `<DSH_HOME>` 默认是 `~/.dsh`（Windows 为 `%USERPROFILE%\.dsh`）。
+
+**已加入插件市场**：本插件已收录进 [awesome-dsh-plugin](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin) 插件目录（[PR #12160](https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/12160)，2026-11-07 合并）。在 DSH 内置插件市场搜索 `Nero0427/dsh-purge-lite`，点卡片上的安装即可；市场安装走 `github:` 仓库源，等价于下面的方式三，也能正常收到更新提示。
 
 ### 方式一：Release 解压（推荐）
 
