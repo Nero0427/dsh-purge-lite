@@ -19,6 +19,20 @@
 - 补丁表从 84 条裁剪到约 35 条（提示词层 + 审批门 + 沙箱），逐组验证依赖关系。
 - `drifted` 补丁的自动 pattern 更新（当前只能等新版本）。
 
+## [1.5.4-lite] - 2026-11-21
+
+宿主适配：追加 `HOST_VARIANTS_022RC5`，修掉 0.2.2-rc.5 上的 5 条补丁漂移。判定逻辑与注入正文未改。
+
+### Fixed
+
+- `#13` / `#35`：rc.5 把 `throw new Error` 改成 `throw new SandboxEscalationError(..., "CODE")`，`cancelled` 分支拆成三行——追加 rc.5 版 pattern，两条审批门补丁不再静默失效。
+- `#18`：rc.5 删掉了 repeat-tool-reminder 的 `downstream.kind === "block"` 分支——追加精简版 hook pattern。
+- `#56` / `#77`：rc.5 用 `surfaceOp` / `replacements` 重写了对话客户端的 rewind 隐藏机制，原文案已不存在；标记 `softSettle`，由官方原生语义覆盖。
+
+### Docs
+
+- README / release-notes 的版本支持矩阵补 0.2.2-rc.5 列，四个宿主版本统一推荐 `1.5.4-lite`。
+
 ## [1.5.3-lite] - 2026-11-07
 
 注入体积：**分段边界重划 + 缺失自愈**。`mode: "general"` 从「少注入一段 Routing」变成「只注入通用段」，常驻正文从 21,738 字符降到 6,306 字符。判定内容与补丁表未改动。
@@ -290,7 +304,8 @@ node bin/dsh-purge.js --apply
 
 首个精简版基线。从上游 `dsh-purge` v1.1.90 裁出第一版可运行的精简形态：保留注入与补丁主链，砍掉外围面板。
 
-[Unreleased]: https://github.com/Nero0427/dsh-purge-lite/compare/v1.5.3-lite...HEAD
+[Unreleased]: https://github.com/Nero0427/dsh-purge-lite/compare/v1.5.4-lite...HEAD
+[1.5.4-lite]: https://github.com/Nero0427/dsh-purge-lite/compare/v1.5.3-lite...v1.5.4-lite
 [1.5.3-lite]: https://github.com/Nero0427/dsh-purge-lite/compare/v1.5.2-lite...v1.5.3-lite
 [1.5.2-lite]: https://github.com/Nero0427/dsh-purge-lite/compare/v1.5.1-lite...v1.5.2-lite
 [1.5.1-lite]: https://github.com/Nero0427/dsh-purge-lite/compare/v1.5.0-lite...v1.5.1-lite

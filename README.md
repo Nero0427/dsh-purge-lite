@@ -7,7 +7,7 @@
 一个只做两件事的插件：把注入正文塞进 `system prompt`，再给宿主打上让它生效的补丁。除此之外的模块全部不存在。
 
 [![license](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-[![version](https://img.shields.io/badge/version-1.5.3--lite-success.svg)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-1.5.4--lite-success.svg)](CHANGELOG.md)
 [![node](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](https://nodejs.org)
 [![patches](https://img.shields.io/badge/host%20patches-84-informational.svg)](#工作原理)
 [![platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](#兼容性)
@@ -416,26 +416,30 @@ dsh-purge --help        # 帮助
 
 **哪个插件版本支持哪个宿主版本，以此表为准。** `engines.dsh` 只决定「能不能装/能不能加载」，破甲功能是否完整另看最后一列——两者不是一回事。
 
-| 插件版本 | `engines.dsh` | 0.2.1-rc.2 | 0.2.1-rc.5 | 0.2.2-rc.1 | 说明 |
-|---|---|---|---|---|---|
-| `≤ 1.4.0-lite` | 未声明 | 完整 | 完整 | 未适配 | 无版本门，宿主不拦截，但补丁只对齐到 rc.5 |
-| `1.4.1-lite` | `>=0.2.1-rc.2 <=0.2.1-rc.5` | 完整 | 完整 | **拒绝加载** | 上限把新宿主挡在 `dsh-app-boot` 兼容性门外 |
-| `1.4.2-lite` | `>=0.2.1-rc.2 <0.2.3-0` | 完整 | 完整 | **能装，功能残缺** | 过渡版：只放宽声明，11 条补丁失配；已由 1.5.0-lite 取代，勿用 |
-| `1.5.0-lite` | `>=0.2.1-rc.2 <0.2.3-0` | 完整 | 完整 | 完整 | 首个完整支持 0.2.2-rc.1 的版本；注入总开关关闭不彻底，见 1.5.1-lite |
-| `1.5.1-lite` | `>=0.2.1-rc.2 <0.2.3-0` | 完整 | 完整 | 完整 | 1.5.0 + 注入总开关修复：关闭 = 原生 system prompt，不残留任何注入段 |
-| `1.5.2-lite` | `>=0.2.1-rc.2 <0.2.3-0` | 完整 | 完整 | 完整 | 1.5.1 + 思考开销收敛：语言规则不再自相矛盾、锚点禁词清单合并为正向指令、新增「一次判定」纪律 |
-| **`1.5.3-lite`** | `>=0.2.1-rc.2 <0.2.3-0` | **完整** | **完整** | **完整** | 1.5.2 + 分段边界重划与缺失自愈：`general` 只注入通用段，常驻正文 21,738 → 6,306 字符 |
+| 插件版本 | `engines.dsh` | 0.2.1-rc.2 | 0.2.1-rc.5 | 0.2.2-rc.1 | 0.2.2-rc.5 | 说明 |
+|---|---|---|---|---|---|---|
+| `≤ 1.4.0-lite` | 未声明 | 完整 | 完整 | 未适配 | 未适配 | 无版本门，宿主不拦截，但补丁只对齐到 rc.5 |
+| `1.4.1-lite` | `>=0.2.1-rc.2 <=0.2.1-rc.5` | 完整 | 完整 | **拒绝加载** | **拒绝加载** | 上限把新宿主挡在 `dsh-app-boot` 兼容性门外 |
+| `1.4.2-lite` | `>=0.2.1-rc.2 <0.2.3-0` | 完整 | 完整 | **能装，功能残缺** | **能装，功能残缺** | 过渡版：只放宽声明，11 条补丁失配；已由 1.5.0-lite 取代，勿用 |
+| `1.5.0-lite` | `>=0.2.1-rc.2 <0.2.3-0` | 完整 | 完整 | 完整 | 3 条补丁漂移 | 首个完整支持 0.2.2-rc.1 的版本；注入总开关关闭不彻底 |
+| `1.5.1-lite` | `>=0.2.1-rc.2 <0.2.3-0` | 完整 | 完整 | 完整 | 3 条补丁漂移 | 1.5.0 + 注入总开关修复：关闭 = 原生 system prompt，不残留任何注入段 |
+| `1.5.2-lite` | `>=0.2.1-rc.2 <0.2.3-0` | 完整 | 完整 | 完整 | 3 条补丁漂移 | 1.5.1 + 思考开销收敛：语言规则不再自相矛盾、锚点禁词清单合并为正向指令、新增「一次判定」纪律 |
+| `1.5.3-lite` | `>=0.2.1-rc.2 <0.2.3-0` | 完整 | 完整 | 完整 | 3 条补丁漂移 | 1.5.2 + 分段边界重划与缺失自愈：`general` 只注入通用段，常驻正文 21,738 → 6,306 字符 |
+| **`1.5.4-lite`** | `>=0.2.1-rc.2 <0.2.3-0` | **完整** | **完整** | **完整** | **完整** | 1.5.3 + rc.5 补丁适配：追加 5 条候选，`--apply` 后 0 drifted |
 
 反过来看，按你的宿主版本选插件：
 
 | 宿主版本 | 推荐插件版本 | 升级前必读 |
 |---|---|---|
-| `0.2.1-rc.2` / `0.2.1-rc.5` | `1.5.3-lite` | 从 1.4.x 升级照「升级」章节走 `--revert` → 替换 → `--apply` |
-| `0.2.2-rc.1` | **`1.5.3-lite`**（`1.5.0-lite` 补丁完整但开关关闭不彻底） | ① 第三方 `dsh-ops 0.4.4` 声明 `<0.2.2-0`，须先升到 `0.5.0`，否则宿主拒绝加载；② 覆盖安装会还原 `app.asar` 并摊掉全部补丁，需重新解包、`--apply --status`、重启；③ `app-update.yml` 会恢复官方 nightly 源，要锁版本需再改回 `disabled.invalid` |
+| `0.2.1-rc.2` / `0.2.1-rc.5` | `1.5.4-lite` | 从 1.4.x 升级照「升级」章节走 `--revert` → 替换 → `--apply` |
+| `0.2.2-rc.1` | `1.5.4-lite` | 覆盖安装会还原 `app.asar` 并摊掉全部补丁，需重新解包、`--apply --status`、重启；`app-update.yml` 会恢复官方 nightly 源，要锁版本需再改回 `disabled.invalid` |
+| `0.2.2-rc.5` | **`1.5.4-lite`** | ① rc.5 改写了审批门三条补丁的目标代码，1.5.3 及更早会报 5 条 `drifted` 且静默失效；② 覆盖安装还原 `app.asar`，需重新解包 + `--apply --status` + 重启；③ `app-update.yml` 锁回 `disabled.invalid` |
 
 **1.5.0-lite 做了什么**：官方 0.2.2-rc.1 改写了沙箱授信、观察策略、system-prompt、agent-loop、桌面壳 `main.js` 的实现，并把交付物提示词迁到 `dsh-deliverable-file-references`、PTC `run_code` 描述迁到 `dsh-tool-executor-ptc`、工具审批分支迁到 `dsh-tools/lib/pipeline.js`。本版给 11 条受影响补丁**追加**新版原文候选、给 4 个目标路径补上迁移后的新文件，旧版 pattern 一条未删——引擎逐条尝试命中，所以三个宿主版本共用同一张 84 条补丁表，不需要按宿主分发不同插件。
 
 **验证口径**（离线补丁层，非运行时）：从官方安装包解出 `app.asar`（213,202,918 B / 20,519 文件）建立干净树，完整跑一遍 `applyPatches` 后 `drifted = 0`、`pending = 0`；11 条修复项的 marker 全部落盘；48 个被改写的 `.js` 文件 `node --check` 全通过；15 条破甲语义断言全通过；桌面壳 5 条补丁单独验证全部 `applied`；在 rc.5 真实宿主上跑 `--status` 与改动前逐条比对，差异 0。**端到端的模型行为仍需你在升级后发一条消息人工确认**——离线验证只能证明补丁正确写进了宿主文件。
+
+**1.5.4-lite 改了什么**：官方 0.2.2-rc.5 把 `throw new Error` 换成 `throw new SandboxEscalationError(..., "CODE")`（#13/#35）、删掉 repeat-tool-reminder 的 block 分支（#18）、用 `surfaceOp`/`replacements` 重写 rewind 隐藏机制（#56/#77）。本版追加 `HOST_VARIANTS_022RC5` 适配层：前三条追加 rc.5 版 pattern，后两条标记 `softSettle`（官方新机制原生覆盖）。从 rc.5 官方 asar 导出的干净树上验证，`--apply` 后从 66 applied / 5 drifted 收敛到 71 applied / 0 drifted / 0 pending。判定逻辑与注入正文未动，rc.1 及更早宿主不受影响。
 
 **1.5.3-lite 改了什么**：分段边界从「House Rules 之前」前移到「Scoped Rules 之前」，把任务分类规则和产出模板（占正文 71%）整块划进场景段；`core.md` 缺失时自动从 `prompt-inject.md` 现场拆，重装/换机不再静默退回全量。`mode: "general"` 的常驻正文从 19,427 字节降到 8,179 字节。判定内容与补丁表未动。
 
